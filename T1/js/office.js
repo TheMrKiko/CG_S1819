@@ -6,13 +6,102 @@ class Object3D extends THREE.Object3D {
 
     constructor() {
         super();
-        
+
         this.velocity = new THREE.Vector3();
         this.acceleration = new THREE.Vector3();
         this.friction;
     }
 
     animate(_) {
+    }
+}
+class Lamp extends Object3D {
+    constructor(x, y, z) {
+        super();
+
+        this.addBase(0, 0, 0);
+        this.addTube(0, 0.5, 0)
+        this.addReflector(0, 13, 0);
+        this.addHolder(0, 14.5, 0);
+        this.addLamp(0, 15 ,0);
+        this.add(new THREE.AxisHelper(3));
+
+        this.position.set(x, y, z);
+    }
+
+    addBase(x, y, z) {
+        "use strict";
+
+        var baseMaterial = new THREE.MeshBasicMaterial({
+            color: 0xdd7316,
+            wireframe: true
+        });
+        var baseGeometry = new THREE.CylinderGeometry(4, 4, 0.5, 20);
+
+        var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+
+        baseMesh.position.set(x, y + 0.25, z);
+        this.add(baseMesh);
+    }
+
+    addTube(x, y, z) {
+        "use strict";
+
+        var tubeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xdd7316,
+            wireframe: true
+        });
+        var tubeGeometry = new THREE.CylinderGeometry(1, 1, 14, 15);
+
+        var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+
+        tubeMesh.position.set(x, y + 7, z);
+        this.add(tubeMesh);
+    }
+
+    addReflector(x, y, z) {
+        "use strict";
+
+        var refletorMaterial = new THREE.MeshBasicMaterial({
+            color: 0xdd7316,
+            wireframe: true
+        });
+        var refletorGeometry = new THREE.CylinderGeometry(1, 5, 5, 15, 1, true, 0, Math.PI * 2);
+
+        var refletorMesh = new THREE.Mesh(refletorGeometry, refletorMaterial);
+
+        refletorMesh.position.set(x, y + 2.5, z);
+        this.add(refletorMesh);
+    }
+
+    addHolder(x, y, z) {
+        "use strict";
+
+        var holderMaterial = new THREE.MeshBasicMaterial({
+            color: 0xdd7316,
+            wireframe: true
+        });
+        var holderGeometry = new THREE.CylinderGeometry(1, 0.1, 0.5, 15);
+
+        var holderMesh = new THREE.Mesh(holderGeometry, holderMaterial);
+
+        holderMesh.position.set(x, y + 0.25, z);
+        this.add(holderMesh);
+    }
+
+    addLamp(x, y, z) {
+        "use strict";
+
+        var lampMaterial = new THREE.MeshBasicMaterial({
+            color: 0x54ffed,
+            wireframe: true
+        });
+        var lampGeometry = new THREE.SphereGeometry(1, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
+
+        var lampMesh = new THREE.Mesh(lampGeometry, lampMaterial);
+
+        lampMesh.position.set(x, y, z);
+        this.add(lampMesh);
     }
 }
 
@@ -25,8 +114,8 @@ class Table extends Object3D {
         this.addTableLeg(-8, -0.5, 5);
         this.addTableLeg(8, -0.5, 5);
         this.addTableLeg(8, -0.5, -5);
-        //this.add(new THREE.AxisHelper(3));
-        
+        this.add(new THREE.AxisHelper(3));
+
         this.position.set(x, y, x);
     }
 
@@ -151,22 +240,22 @@ class Chair extends Object3D {
         var chairWeelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
 
         var chairWeelMesh = new THREE.Mesh(chairWeelGeometry, chairWeelMaterial);
-        
+
         chairWeelMesh.position.set(x, y, z);
         this.add(chairWeelMesh);
     }
-    
+
     animate(timeDiff) {
         "use strict";
         if (this.friction && this.velocity.distanceToSquared(new THREE.Vector3())<0.01){
-            this.acceleration=new THREE.Vector3(); 
+            this.acceleration=new THREE.Vector3();
             this.velocity = new THREE.Vector3();
             this.friction = false;
         }else{
         //this.position.copy(THREE.Vector3().addVectors(this.position, THREE.Vector3().addVectors(this.velocity.multiplyScalar(timeDiff),)));
-        
+
         //position.add
-        
+
         var position = this.position.clone();
         var velocity = this.velocity.clone();
         var acceleration = this.acceleration.clone();
@@ -187,6 +276,7 @@ function createScene() {
     scene.add(new THREE.AxisHelper(5));
     scene.add(new Table(0, 8.5, 0));
     scene.add(new Chair(0, 5.5, -4));
+    scene.add(new Lamp(15, 0, 0))
 }
 
 function createCamera() {
@@ -197,9 +287,9 @@ function createCamera() {
         1,
         1000
     );
-    camera.position.x = 25;
-    camera.position.y = 25;
-    camera.position.z = 25;
+    camera.position.x = 60;
+    camera.position.y = 20;
+    camera.position.z = 0;
     camera.lookAt(scene.position);
 }
 
@@ -216,7 +306,7 @@ function onResize() {
 
 function onKeyDown(e) {
     "use strict";
-    
+
     switch (e.keyCode) {
         case 65: //A
         case 97: //a
@@ -249,14 +339,14 @@ function onKeyDown(e) {
             }
         });
         break;
-            
+
     }
 }
 
 
 function onKeyUp(e) {
     "use strict";
-    
+
     switch (e.keyCode) {
         case 38: //up
             scene.traverse(function(node) {
@@ -273,7 +363,7 @@ function onKeyUp(e) {
                 node.friction = true;
             }
         });
-        break;   
+        break;
     }
 }
 function render() {
