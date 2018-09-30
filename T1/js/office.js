@@ -247,23 +247,17 @@ class Chair extends Object3D {
 
     animate(timeDiff) {
         "use strict";
-        if (this.friction && this.velocity.distanceToSquared(new THREE.Vector3())<0.01){
-            this.acceleration=new THREE.Vector3();
-            this.velocity = new THREE.Vector3();
+
+        var oldVelocity = this.velocity.clone();
+        this.velocity.add(this.acceleration.clone().multiplyScalar(timeDiff));
+        console.log(this.position, this.acceleration, oldVelocity, this.velocity.angleTo(oldVelocity))
+        if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
+            //console.log(  this.velocity, oldVelocity, this.velocity.angleTo(oldVelocity))
+            this.acceleration = new THREE.Vector3( ); 
+            this.velocity = new THREE.Vector3( );
             this.friction = false;
-        }else{
-        //this.position.copy(THREE.Vector3().addVectors(this.position, THREE.Vector3().addVectors(this.velocity.multiplyScalar(timeDiff),)));
-
-        //position.add
-
-        var position = this.position.clone();
-        var velocity = this.velocity.clone();
-        var acceleration = this.acceleration.clone();
-        this.position.copy(position.add(velocity.multiplyScalar(timeDiff)).add(acceleration.multiplyScalar((timeDiff**2)/2)));
-        //console.log(this.velocity)
-        velocity = this.velocity.clone();
-        acceleration = this.acceleration.clone();
-        this.velocity = velocity.add(acceleration.multiplyScalar(timeDiff));
+        } else {
+            this.position.add(oldVelocity.multiplyScalar(timeDiff)).add(this.velocity.clone().multiplyScalar(timeDiff/2));
         }
     }
 }
@@ -282,14 +276,14 @@ function createScene() {
 function createCamera() {
     "use strict";
     camera = new THREE.PerspectiveCamera(
-        40,
+        70,
         window.innerWidth / window.innerHeight,
         1,
         1000
     );
-    camera.position.x = 60;
-    camera.position.y = 20;
-    camera.position.z = 0;
+    camera.position.x = 25;
+    camera.position.y = 25;
+    camera.position.z = 25;
     camera.lookAt(scene.position);
 }
 
@@ -326,15 +320,15 @@ function onKeyDown(e) {
             break;
         case 38: //up
             scene.traverse(function(node) {
-                if(node instanceof Chair) {
-                    node.acceleration = new THREE.Vector3(0, 0, 3);
+                if (node instanceof Chair) {
+                    node.acceleration = new THREE.Vector3(0, 0, 1);
                 }
             });
         break;
         case 40: //down
         scene.traverse(function(node) {
-            if(node instanceof Chair) {
-                node.acceleration = new THREE.Vector3(0, 0, -3);
+            if (node instanceof Chair) {
+                node.acceleration = new THREE.Vector3(0, 0, -1);
                 node.friction = false;
             }
         });
@@ -350,16 +344,16 @@ function onKeyUp(e) {
     switch (e.keyCode) {
         case 38: //up
             scene.traverse(function(node) {
-                if(node instanceof Chair) {
-                    node.acceleration.multiplyScalar(-0.5);
+                if (node instanceof Chair) {
+                    node.acceleration.multiplyScalar(-2).multiply(node.velocity.clone().normalize());
                     node.friction = true;
                 }
             });
         break;
         case 40: //down
         scene.traverse(function(node) {
-            if(node instanceof Chair) {
-                node.acceleration.multiplyScalar(-0.5);
+            if (node instanceof Chair) {
+                node.acceleration.multiplyScalar(-2).multiply(node.velocity.clone().normalize());
                 node.friction = true;
             }
         });
