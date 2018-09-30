@@ -52,6 +52,12 @@ class Chair extends THREE.Object3D {
         this.addChairSeat(0, 0, 0);
         this.addChairBack(0, 0.5, -3);
         this.addChairAxe(0, -0.5, 0);
+        this.addChairLeg(0, -4, 0, 0);
+        this.addChairLeg(0, -4, 0, Math.PI/2);
+        this.addChairWeel(0, -5, 3);
+        this.addChairWeel(0, -5, -3);
+        this.addChairWeel(3, -5, 0);
+        this.addChairWeel(-3, -5, 0);
         this.add(new THREE.AxisHelper(3));
 
         this.position.set(x, y, z);
@@ -64,7 +70,7 @@ class Chair extends THREE.Object3D {
             color: 0xff00ff,
             wireframe: true
         });
-        var chairSeatGeometry = new THREE.BoxGeometry(7, 1, 7);
+        var chairSeatGeometry = new THREE.CubeGeometry(7, 1, 7);
 
         var chairSeatMesh = new THREE.Mesh(chairSeatGeometry, chairSeatMaterial);
 
@@ -79,7 +85,7 @@ class Chair extends THREE.Object3D {
             color: 0xff00ff,
             wireframe: true
         });
-        var chairBackGeometry = new THREE.BoxGeometry(7, 9, 1);
+        var chairBackGeometry = new THREE.CubeGeometry(7, 9, 1);
 
         var chairBackMesh = new THREE.Mesh(chairBackGeometry, chairBackMaterial);
 
@@ -94,12 +100,44 @@ class Chair extends THREE.Object3D {
             color: 0xff00ff,
             wireframe: true
         });
-        var chairAxeGeometry = new THREE.CylinderGeometry(1, 1, 4);
+        var chairAxeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3);
 
         var chairAxeMesh = new THREE.Mesh(chairAxeGeometry, chairAxeMaterial);
 
-        chairAxeMesh.position.set(x, y - 2, z);
+        chairAxeMesh.position.set(x, y - 1.5, z);
         this.add(chairAxeMesh);
+    }
+
+    addChairLeg(x, y, z, rotationY) {
+        "use strict";
+
+        var chairLegMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff00ff,
+            wireframe: true
+        });
+        var chairLegGeometry = new THREE.CylinderGeometry(0.5, 0.5, 7);
+
+        var chairLegMesh = new THREE.Mesh(chairLegGeometry, chairLegMaterial);
+
+        chairLegMesh.position.set(x, y, z);
+        chairLegMesh.rotateX(Math.PI/2);
+        chairLegMesh.rotateZ(rotationY);
+        this.add(chairLegMesh);
+    }
+
+    addChairWeel(x, y, z) {
+        "use strict";
+
+        var chairWeelMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff00ff,
+            wireframe: true
+        });
+        var chairWeelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
+
+        var chairWeelMesh = new THREE.Mesh(chairWeelGeometry, chairWeelMaterial);
+
+        chairWeelMesh.position.set(x, y, z);
+        this.add(chairWeelMesh);
     }
 }
 
@@ -110,7 +148,7 @@ function createScene() {
 
     scene.add(new THREE.AxisHelper(5));
     scene.add(new Table(0, 8.5, 0));
-    scene.add(new Chair(0, 5.5, 0));
+    scene.add(new Chair(0, 5.5, -4));
 }
 
 function createCamera() {
@@ -123,7 +161,7 @@ function createCamera() {
     );
     camera.position.x = 25;
     camera.position.y = 25;
-    camera.position.z = 25;
+    camera.position.z = -5;
     camera.lookAt(scene.position);
 }
 
