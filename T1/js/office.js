@@ -1,6 +1,22 @@
 var camera, scene, renderer;
 
-class Table extends THREE.Object3D {
+var nowDate;
+
+class Object3D extends THREE.Object3D {
+
+    constructor() {
+        super();
+        
+        this.velocity = new THREE.Vector3();
+        this.acceleration = new THREE.Vector3();
+        this.friction;
+    }
+
+    animate(_) {
+    }
+}
+
+class Table extends Object3D {
     constructor(x, y, z) {
         super();
 
@@ -9,8 +25,8 @@ class Table extends THREE.Object3D {
         this.addTableLeg(-8, -0.5, 5);
         this.addTableLeg(8, -0.5, 5);
         this.addTableLeg(8, -0.5, -5);
-        this.add(new THREE.AxisHelper(3));
-
+        //this.add(new THREE.AxisHelper(3));
+        
         this.position.set(x, y, x);
     }
 
@@ -45,7 +61,7 @@ class Table extends THREE.Object3D {
     }
 }
 
-class Chair extends THREE.Object3D {
+class Chair extends Object3D {
     constructor(x, y, z) {
         super();
 
@@ -135,9 +151,31 @@ class Chair extends THREE.Object3D {
         var chairWeelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
 
         var chairWeelMesh = new THREE.Mesh(chairWeelGeometry, chairWeelMaterial);
-
+        
         chairWeelMesh.position.set(x, y, z);
         this.add(chairWeelMesh);
+    }
+    
+    animate(timeDiff) {
+        "use strict";
+        if (this.friction && this.velocity.distanceToSquared(new THREE.Vector3())<0.01){
+            this.acceleration=new THREE.Vector3(); 
+            this.velocity = new THREE.Vector3();
+            this.friction = false;
+        }else{
+        //this.position.copy(THREE.Vector3().addVectors(this.position, THREE.Vector3().addVectors(this.velocity.multiplyScalar(timeDiff),)));
+        
+        //position.add
+        
+        var position = this.position.clone();
+        var velocity = this.velocity.clone();
+        var acceleration = this.acceleration.clone();
+        this.position.copy(position.add(velocity.multiplyScalar(timeDiff)).add(acceleration.multiplyScalar((timeDiff**2)/2)));
+        //console.log(this.velocity)
+        velocity = this.velocity.clone();
+        acceleration = this.acceleration.clone();
+        this.velocity = velocity.add(acceleration.multiplyScalar(timeDiff));
+        }
     }
 }
 
@@ -161,7 +199,7 @@ function createCamera() {
     );
     camera.position.x = 25;
     camera.position.y = 25;
-    camera.position.z = -5;
+    camera.position.z = 25;
     camera.lookAt(scene.position);
 }
 
@@ -178,7 +216,7 @@ function onResize() {
 
 function onKeyDown(e) {
     "use strict";
-
+    
     switch (e.keyCode) {
         case 65: //A
         case 97: //a
@@ -196,16 +234,57 @@ function onKeyDown(e) {
                 }
             });
             break;
+        case 38: //up
+            scene.traverse(function(node) {
+                if(node instanceof Chair) {
+                    node.acceleration = new THREE.Vector3(0, 0, 3);
+                }
+            });
+        break;
+        case 40: //down
+        scene.traverse(function(node) {
+            if(node instanceof Chair) {
+                node.acceleration = new THREE.Vector3(0, 0, -3);
+                node.friction = false;
+            }
+        });
+        break;
+            
     }
 }
 
+
+function onKeyUp(e) {
+    "use strict";
+    
+    switch (e.keyCode) {
+        case 38: //up
+            scene.traverse(function(node) {
+                if(node instanceof Chair) {
+                    node.acceleration.multiplyScalar(-0.5);
+                    node.friction = true;
+                }
+            });
+        break;
+        case 40: //down
+        scene.traverse(function(node) {
+            if(node instanceof Chair) {
+                node.acceleration.multiplyScalar(-0.5);
+                node.friction = true;
+            }
+        });
+        break;   
+    }
+}
 function render() {
     "use strict";
+
     renderer.render(scene, camera);
 }
 
 function init() {
     "use strict";
+
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
@@ -219,11 +298,23 @@ function init() {
 
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
+    window.addEventListener("keyup", onKeyUp);
+
+    nowDate = new Date();
 }
 
 function animate() {
     "use strict";
+
+    var timeDiff = (new Date().getTime() - nowDate.getTime()) / 1000;
+    scene.traverse(function(node) {
+        if(node instanceof Object3D) {
+            node.animate(timeDiff);
+        }
+    })
+
     render();
 
+    nowDate = new Date();
     requestAnimationFrame(animate);
 }
