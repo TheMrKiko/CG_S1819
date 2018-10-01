@@ -332,13 +332,9 @@ function onResize() {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
  
-    scale_width = (window.innerWidth * scale_width) / last_width;
-    scale_height = (window.innerHeight * scale_height) / last_height;
- 
-    last_width = window.innerWidth;
-    last_height = window.innerHeight;
+   
 
-    if (window.innerWidth / window.innerHeight > ratio){
+    if (window.innerHeight > 0 && window.innerWidth > 0){
         resizeCameraTopo(scale_height);
         resizeCameraFrontal(scale_height);
         resizeCameraLateral(scale_height);
@@ -351,25 +347,16 @@ function onResize() {
 }
 
 function resizeCameraLateral(scale) {
-    camera[0].left = -window.innerWidth / scale;
-    camera[0].right = window.innerWidth / scale;
-    camera[0].top = -window.innerHeight / scale;
-    camera[0].bottom = window.innerHeight / scale;
+    camera[0].aspect = window.innerWidth / window.innerHeight;
     camera[0].updateProjectionMatrix();
 }
 
 function resizeCameraTopo(scale) {
-    camera[1].left = -window.innerWidth / scale;
-    camera[1].right = window.innerWidth / scale;
-    camera[1].top = -window.innerHeight / scale;
-    camera[1].bottom = window.innerHeight / scale;
+    camera[1].aspect = window.innerWidth / window.innerHeight;
     camera[1].updateProjectionMatrix();
 }
 function resizeCameraFrontal(scale) {
-    camera[2].left = -window.innerWidth / scale;
-    camera[2].right = window.innerWidth / scale;
-    camera[2].top = -window.innerHeight / scale;
-    camera[2].bottom = window.innerHeight / scale;
+    camera.aspect[2] = window.innerWidth / window.innerHeight;
     camera[2].updateProjectionMatrix();
 }
 
