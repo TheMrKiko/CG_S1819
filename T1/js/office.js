@@ -1,4 +1,6 @@
-var camera, scene, renderer;
+var scene, renderer;
+var camera= new Array(3);
+var camera_activa= 0 ;
 
 var nowDate;
 
@@ -66,7 +68,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var refletorMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdd7316,
+            color: 0xffff1a,
             wireframe: true
         });
         var refletorGeometry = new THREE.CylinderGeometry(1, 5, 5, 15, 1, true, 0, Math.PI * 2);
@@ -81,7 +83,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var holderMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdd7316,
+            color: 0xffff1a,
             wireframe: true
         });
         var holderGeometry = new THREE.CylinderGeometry(1, 0.1, 0.5, 15);
@@ -96,7 +98,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var lampMaterial = new THREE.MeshBasicMaterial({
-            color: 0x54ffed,
+            color: 0xffff1a,
             wireframe: true
         });
         var lampGeometry = new THREE.SphereGeometry(1, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
@@ -275,35 +277,115 @@ function createScene() {
     scene.add(new Lamp(15, 0, 0))
 }
 
-function createCamera() {
+function createCameraTopo() {
     "use strict";
-    camera = new THREE.PerspectiveCamera(
-        60,
-        window.innerWidth / window.innerHeight,
-        1,
+    camera[0] = new THREE.OrthographicCamera(
+        -25,
+         25,
+         25, 
+        -25,
+        1, 
         1000
-    );
-    camera.position.x = 25;
-    camera.position.y = 25;
-    camera.position.z = 25;
-    camera.lookAt(scene.position);
+       );
+       camera[0].position.x = 0;
+       camera[0].position.y = 40;
+       camera[0].position.z = 0;
+   
+       camera[0].lookAt(scene.position);
+}
+
+function createCameraLateral(){
+    camera[1] = new THREE.OrthographicCamera(
+        -25,
+         25,
+         25, 
+        -25,
+        1, 
+        1000
+       );
+       camera[1].position.x = 40;
+       camera[1].position.y = 0;
+       camera[1].position.z = 0;
+   
+       camera[1].lookAt(scene.position);
+}
+
+function createCameraFrontal() {
+    "use strict";
+    camera[2] = new THREE.OrthographicCamera(
+        -25,
+         25,
+         25, 
+        -25,
+        1, 
+        1000
+       );
+       camera[2].position.x = 0;
+       camera[2].position.y = 0;
+       camera[2].position.z = 40;
+   
+       camera[2].lookAt(scene.position);
 }
 
 function onResize() {
     "use strict";
 
     renderer.setSize(window.innerWidth, window.innerHeight);
+ 
+    scale_width = (window.innerWidth * scale_width) / last_width;
+    scale_height = (window.innerHeight * scale_height) / last_height;
+ 
+    last_width = window.innerWidth;
+    last_height = window.innerHeight;
 
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+    if (window.innerWidth / window.innerHeight > ratio){
+        resizeCameraTopo(scale_height);
+        resizeCameraFrontal(scale_height);
+        resizeCameraLateral(scale_height);
     }
+    else{
+        resizeCameraTopo(scale_height);
+        resizeCameraFrontal(scale_height);
+        resizeCameraLateral(scale_height);
+    }
+}
+
+function resizeCameraLateral(scale) {
+    camera[0].left = -window.innerWidth / scale;
+    camera[0].right = window.innerWidth / scale;
+    camera[0].top = -window.innerHeight / scale;
+    camera[0].bottom = window.innerHeight / scale;
+    camera[0].updateProjectionMatrix();
+}
+
+function resizeCameraTopo(scale) {
+    camera[1].left = -window.innerWidth / scale;
+    camera[1].right = window.innerWidth / scale;
+    camera[1].top = -window.innerHeight / scale;
+    camera[1].bottom = window.innerHeight / scale;
+    camera[1].updateProjectionMatrix();
+}
+function resizeCameraFrontal(scale) {
+    camera[2].left = -window.innerWidth / scale;
+    camera[2].right = window.innerWidth / scale;
+    camera[2].top = -window.innerHeight / scale;
+    camera[2].bottom = window.innerHeight / scale;
+    camera[2].updateProjectionMatrix();
+}
+
+function switch_camera(number) {
+    camera_activa = number;
 }
 
 function onKeyDown(e) {
     "use strict";
-
     switch (e.keyCode) {
+        case 49: //1
+            switch_camera(1);
+            break;
+         case 51: //3
+            switch_camera(2);
+            break;
         case 65: //A
         case 97: //a
             scene.traverse(function(node) {
@@ -357,7 +439,7 @@ function onKeyUp(e) {
 function render() {
     "use strict";
 
-    renderer.render(scene, camera);
+    renderer.render(scene, camera[camera_activa]);
 }
 
 function init() {
@@ -370,7 +452,9 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera();
+    createCameraTopo();
+    createCameraLateral();
+    createCameraFrontal();
 
     render();
 
