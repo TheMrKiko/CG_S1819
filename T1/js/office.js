@@ -2,6 +2,8 @@ var camera, scene, renderer;
 
 var nowDate;
 
+const ACCELERATION_RATE = 2;
+
 class Object3D extends THREE.Object3D {
 
     constructor() {
@@ -15,6 +17,7 @@ class Object3D extends THREE.Object3D {
     animate(_) {
     }
 }
+
 class Lamp extends Object3D {
     constructor(x, y, z) {
         super();
@@ -250,9 +253,8 @@ class Chair extends Object3D {
 
         var oldVelocity = this.velocity.clone();
         this.velocity.add(this.acceleration.clone().multiplyScalar(timeDiff));
-        console.log(this.position, this.acceleration, oldVelocity, this.velocity.angleTo(oldVelocity))
+
         if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
-            //console.log(  this.velocity, oldVelocity, this.velocity.angleTo(oldVelocity))
             this.acceleration = new THREE.Vector3( ); 
             this.velocity = new THREE.Vector3( );
             this.friction = false;
@@ -276,7 +278,7 @@ function createScene() {
 function createCamera() {
     "use strict";
     camera = new THREE.PerspectiveCamera(
-        70,
+        60,
         window.innerWidth / window.innerHeight,
         1,
         1000
@@ -321,19 +323,19 @@ function onKeyDown(e) {
         case 38: //up
             scene.traverse(function(node) {
                 if (node instanceof Chair) {
-                    node.acceleration = new THREE.Vector3(0, 0, 1);
+                    node.acceleration = new THREE.Vector3(0, 0, ACCELERATION_RATE);
+                    node.friction = false;
                 }
             });
-        break;
+            break;
         case 40: //down
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.acceleration = new THREE.Vector3(0, 0, -1);
+            scene.traverse(function(node) {
+                if (node instanceof Chair) {
+                    node.acceleration = new THREE.Vector3(0, 0, -ACCELERATION_RATE);
                 node.friction = false;
-            }
-        });
-        break;
-
+                }
+            });
+            break;
     }
 }
 
@@ -343,20 +345,12 @@ function onKeyUp(e) {
 
     switch (e.keyCode) {
         case 38: //up
+        case 40: //down
             scene.traverse(function(node) {
                 if (node instanceof Chair) {
-                    node.acceleration.multiplyScalar(-2).multiply(node.velocity.clone().normalize());
-                    node.friction = true;
+                    node.acceleration.multiplyScalar(-1 * ACCELERATION_RATE * Math.cos(node.velocity.angleTo(node.acceleration)));                    node.friction = true;
                 }
             });
-        break;
-        case 40: //down
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.acceleration.multiplyScalar(-2).multiply(node.velocity.clone().normalize());
-                node.friction = true;
-            }
-        });
         break;
     }
 }
