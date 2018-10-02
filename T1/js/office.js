@@ -4,7 +4,7 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION_RATE = 1;
+const ACCELERATION_RATE = 2;
 
 class Object3D extends THREE.Object3D {
 
@@ -286,30 +286,30 @@ function createCamera(index, x, y, z) {
         window.innerWidth / 25,
         window.innerHeight / 25,
         - window.innerHeight /25,
-        1,
+        -1000,
         1000
        );
        cameras[index].position.set(x, y, z)
 
-       cameras[index].lookAt(scene.position);
+       cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
 }
 
 function createCameraTop() {
     "use strict";
 
-    createCamera(0, 0, 40, 0);
+    createCamera(0, 0, 20, 0);
 }
 
 function createCameraSide() {
     "use strict";
 
-    createCamera(1, 40, 0, 0);
+    createCamera(1, 30, 8.5, 0);
 }
 
 function createCameraFront() {
     "use strict";
 
-    createCamera(2, 0, 0, 40)
+    createCamera(2, 0, 8.5, 30)
 }
 
 function onResize() {
