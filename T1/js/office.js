@@ -1,6 +1,6 @@
 var scene, renderer;
 var cameras = new Array(3);
-var active_camera = 0;
+var activeCamera = 0;
 
 var nowDate;
 
@@ -68,10 +68,10 @@ class Lamp extends Object3D {
         "use strict";
 
         var refletorMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffff1a,
+            color: "rgba(255, 255, 26)",
             wireframe: true,
-			opacity:0.3,
-			transparent:true
+			opacity: 0.3,
+			transparent: true
         });
         var refletorGeometry = new THREE.CylinderGeometry(1, 3, 5, 15, 1, true, 0, Math.PI * 2);
 
@@ -282,10 +282,10 @@ function createScene() {
 function createCamera(index, x, y, z) {
     "use strict";
     cameras[index] = new THREE.OrthographicCamera(
-        -window.innerWidth / 25,
+        - window.innerWidth / 25,
         window.innerWidth / 25,
         window.innerHeight / 25,
-        -window.innerHeight /25,
+        - window.innerHeight /25,
         1,
         1000
        );
@@ -327,10 +327,10 @@ function onResize() {
 
 function resizeCamera(index, ) {
     "use strict";
-	cameras[index].left = -window.innerWidth/25 ;
-	cameras[index].right = window.innerWidth/25 ;
-	cameras[index].top = window.innerHeight/25 ;
-	cameras[index].bottom = -window.innerHeight/25 ;
+	cameras[index].left = - window.innerWidth / 25;
+	cameras[index].right = window.innerWidth / 25;
+	cameras[index].top = window.innerHeight / 25;
+	cameras[index].bottom = - window.innerHeight / 25;
     cameras[index].updateProjectionMatrix();
 }
 
@@ -355,7 +355,7 @@ function resizeCameraFront() {
 function switchCamera(index) {
     "use strict";
 
-    active_camera = index;
+    activeCamera = index;
 }
 
 function onKeyDown(e) {
@@ -423,7 +423,7 @@ function onKeyUp(e) {
 function render() {
     "use strict";
 
-    renderer.render(scene, cameras[active_camera]);
+    renderer.render(scene, cameras[activeCamera]);
 }
 
 function init() {
