@@ -1,6 +1,6 @@
 var scene, renderer;
 var cameras = new Array(3);
-var camera_activa = 0;
+var active_camera = 0;
 
 var nowDate;
 
@@ -38,10 +38,10 @@ class Lamp extends Object3D {
         "use strict";
 
         var baseMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdd7316,
+            color: 0x663300,
             wireframe: true
         });
-        var baseGeometry = new THREE.CylinderGeometry(4, 4, 0.5, 20);
+        var baseGeometry = new THREE.CylinderGeometry(2.5, 2.5, 0.5, 20);
 
         var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
 
@@ -53,10 +53,10 @@ class Lamp extends Object3D {
         "use strict";
 
         var tubeMaterial = new THREE.MeshBasicMaterial({
-            color: 0xdd7316,
+            color: 0x663300,
             wireframe: true
         });
-        var tubeGeometry = new THREE.CylinderGeometry(1, 1, 14, 15);
+        var tubeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 14, 15);
 
         var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
 
@@ -69,9 +69,11 @@ class Lamp extends Object3D {
 
         var refletorMaterial = new THREE.MeshBasicMaterial({
             color: 0xffff1a,
-            wireframe: true
+            wireframe: true,
+			opacity:0.3,
+			transparent:true
         });
-        var refletorGeometry = new THREE.CylinderGeometry(1, 5, 5, 15, 1, true, 0, Math.PI * 2);
+        var refletorGeometry = new THREE.CylinderGeometry(1, 3, 5, 15, 1, true, 0, Math.PI * 2);
 
         var refletorMesh = new THREE.Mesh(refletorGeometry, refletorMaterial);
 
@@ -86,7 +88,7 @@ class Lamp extends Object3D {
             color: 0xffff1a,
             wireframe: true
         });
-        var holderGeometry = new THREE.CylinderGeometry(1, 0.1, 0.5, 15);
+        var holderGeometry = new THREE.CylinderGeometry(0.7, 0.1, 0.5, 15);
 
         var holderMesh = new THREE.Mesh(holderGeometry, holderMaterial);
 
@@ -101,7 +103,7 @@ class Lamp extends Object3D {
             color: 0xffff1a,
             wireframe: true
         });
-        var lampGeometry = new THREE.SphereGeometry(1, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
+        var lampGeometry = new THREE.SphereGeometry(0.7, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
 
         var lampMesh = new THREE.Mesh(lampGeometry, lampMaterial);
 
@@ -128,10 +130,10 @@ class Table extends Object3D {
         "use strict";
 
         var tableLegMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+            color: 0x808080,
             wireframe: true
         });
-        var tableLegGeometry = new THREE.CylinderGeometry(1, 1, 8, 15);
+        var tableLegGeometry = new THREE.CylinderGeometry(0.5, 0.5, 8, 15);
 
         var tableLegMesh = new THREE.Mesh(tableLegGeometry, tableLegMaterial);
 
@@ -143,7 +145,7 @@ class Table extends Object3D {
         "use strict";
 
         var tableTopMaterial = new THREE.MeshBasicMaterial({
-            color: 0x808080,
+            color: 0x4d2600,
             wireframe: true
         });
         var tableTopGeometry = new THREE.CubeGeometry(18, 1, 12);
@@ -177,7 +179,7 @@ class Chair extends Object3D {
         "use strict";
 
         var chairSeatMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff,
+            color: 0xa22a2a,
             wireframe: true
         });
         var chairSeatGeometry = new THREE.CubeGeometry(7, 1, 7);
@@ -192,7 +194,7 @@ class Chair extends Object3D {
         "use strict";
 
         var chairBackMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff,
+            color: 0xa22a2a,
             wireframe: true
         });
         var chairBackGeometry = new THREE.CubeGeometry(7, 9, 1);
@@ -207,7 +209,7 @@ class Chair extends Object3D {
         "use strict";
 
         var chairAxeMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff,
+            color: 0x808080,
             wireframe: true
         });
         var chairAxeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3);
@@ -222,7 +224,7 @@ class Chair extends Object3D {
         "use strict";
 
         var chairLegMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff,
+            color: 0x808080,
             wireframe: true
         });
         var chairLegGeometry = new THREE.CylinderGeometry(0.5, 0.5, 7);
@@ -239,7 +241,7 @@ class Chair extends Object3D {
         "use strict";
 
         var chairWeelMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff00ff,
+            color: 0xcccccc,
             wireframe: true
         });
         var chairWeelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
@@ -257,7 +259,7 @@ class Chair extends Object3D {
         this.velocity.add(this.acceleration.clone().multiplyScalar(timeDiff));
 
         if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
-            this.acceleration = new THREE.Vector3( ); 
+            this.acceleration = new THREE.Vector3( );
             this.velocity = new THREE.Vector3( );
             this.friction = false;
         } else {
@@ -282,13 +284,13 @@ function createCamera(index, x, y, z) {
     cameras[index] = new THREE.OrthographicCamera(
         -window.innerWidth / 25,
         window.innerWidth / 25,
-        window.innerHeight / 25, 
+        window.innerHeight / 25,
         -window.innerHeight /25,
-        1, 
+        1,
         1000
        );
        cameras[index].position.set(x, y, z)
-   
+
        cameras[index].lookAt(scene.position);
 }
 
@@ -306,7 +308,7 @@ function createCameraSide() {
 
 function createCameraFront() {
     "use strict";
-    
+
     createCamera(2, 0, 0, 40)
 }
 
@@ -317,32 +319,34 @@ function onResize() {
 
     if (window.innerHeight > 0 && window.innerWidth > 0){
         var scale = window.innerWidth / window.innerHeight;
-        resizeCameraTop(scale);
-        resizeCameraFront(scale);
-        resizeCameraSide(scale);
+        resizeCameraTop();
+        resizeCameraFront();
+        resizeCameraSide();
     }
 }
 
 function resizeCamera(index, ) {
     "use strict";
-
-    //cameras[index].aspect = scale;
+	cameras[index].left = -window.innerWidth/25 ;
+	cameras[index].right = window.innerWidth/25 ;
+	cameras[index].top = window.innerHeight/25 ;
+	cameras[index].bottom = -window.innerHeight/25 ;
     cameras[index].updateProjectionMatrix();
 }
 
-function resizeCameraSide(scale) {
+function resizeCameraSide() {
     "use strict";
 
     resizeCamera(0);
 }
 
-function resizeCameraTop(scale) {
+function resizeCameraTop() {
     "use strict";
 
     resizeCamera(1);
 }
 
-function resizeCameraFront(scale) {
+function resizeCameraFront() {
     "use strict";
 
     resizeCamera(2);
@@ -350,8 +354,8 @@ function resizeCameraFront(scale) {
 
 function switchCamera(index) {
     "use strict";
-    
-    camera_activa = index;
+
+    active_camera = index;
 }
 
 function onKeyDown(e) {
@@ -419,7 +423,7 @@ function onKeyUp(e) {
 function render() {
     "use strict";
 
-    renderer.render(scene, cameras[camera_activa]);
+    renderer.render(scene, cameras[active_camera]);
 }
 
 function init() {
