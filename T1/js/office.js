@@ -4,7 +4,8 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION_RATE = 2;
+const ACCELERATION_RATE = 3;
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 
 class Object3D extends THREE.Object3D {
 
@@ -14,6 +15,7 @@ class Object3D extends THREE.Object3D {
         this.velocity = new THREE.Vector3();
         this.acceleration = new THREE.Vector3();
         this.friction;
+        this.angle=0;
     }
 
     animate(_) {
@@ -158,6 +160,7 @@ class Table extends Object3D {
 }
 
 class Chair extends Object3D {
+    
     constructor(x, y, z) {
         super();
 
@@ -255,8 +258,10 @@ class Chair extends Object3D {
     animate(timeDiff) {
         "use strict";
 
+        var acc = this.acceleration.clone()
+        acc.applyAxisAngle(Y_AXIS, this.angle);
         var oldVelocity = this.velocity.clone();
-        this.velocity.add(this.acceleration.clone().multiplyScalar(timeDiff));
+        this.velocity.add(acc.clone().multiplyScalar(timeDiff));
 
         if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
             this.acceleration = new THREE.Vector3( );
@@ -270,9 +275,9 @@ class Chair extends Object3D {
 
 function createScene() {
     "use strict";
-
+    
     scene = new THREE.Scene();
-
+    
     scene.add(new THREE.AxisHelper(5));
     scene.add(new Table(0, 8.5, 0));
     scene.add(new Chair(0, 5.5, -4));
@@ -288,35 +293,35 @@ function createCamera(index, x, y, z) {
         - window.innerHeight /25,
         -1000,
         1000
-       );
-       cameras[index].position.set(x, y, z)
-
-       cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
+    );
+    cameras[index].position.set(x, y, z)
+    
+    cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
 }
 
 function createCameraTop() {
     "use strict";
-
+    
     createCamera(0, 0, 20, 0);
 }
 
 function createCameraSide() {
     "use strict";
-
+    
     createCamera(1, 30, 8.5, 0);
 }
 
 function createCameraFront() {
     "use strict";
-
+    
     createCamera(2, 0, 8.5, 30)
 }
 
 function onResize() {
     "use strict";
-
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
-
+    
     if (window.innerHeight > 0 && window.innerWidth > 0){
         var scale = window.innerWidth / window.innerHeight;
         resizeCameraTop();
@@ -336,25 +341,25 @@ function resizeCamera(index, ) {
 
 function resizeCameraSide() {
     "use strict";
-
+    
     resizeCamera(0);
 }
 
 function resizeCameraTop() {
     "use strict";
-
+    
     resizeCamera(1);
 }
 
 function resizeCameraFront() {
     "use strict";
-
+    
     resizeCamera(2);
 }
 
 function switchCamera(index) {
     "use strict";
-
+    
     activeCamera = index;
 }
 
@@ -362,45 +367,53 @@ function onKeyDown(e) {
     "use strict";
     switch (e.keyCode) {
         case 49: //1
-            switchCamera(0);
-            break;
-         case 50: //2
-            switchCamera(1);
-            break;
+        switchCamera(0);
+        break;
+        case 50: //2
+        switchCamera(1);
+        break;
         case 51: //3
-            switchCamera(2);
-            break;
+        switchCamera(2);
+        break;
         case 65: //A
         case 97: //a
-            scene.traverse(function(node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-            });
-            break;
+        scene.traverse(function(node) {
+            if (node instanceof THREE.Mesh) {
+                node.material.wireframe = !node.material.wireframe;
+            }
+        });
+        break;
         case 69: //E
         case 101: //e
-            scene.traverse(function(node) {
-                if (node instanceof THREE.AxisHelper) {
-                    node.visible = !node.visible;
-                }
-            });
-            break;
+        scene.traverse(function(node) {
+            if (node instanceof THREE.AxisHelper) {
+                node.visible = !node.visible;
+            }
+        });
+        break;
         case 38: //up
-            scene.traverse(function(node) {
-                if (node instanceof Chair) {
-                    node.acceleration = new THREE.Vector3(0, 0, ACCELERATION_RATE);
-                    node.friction = false;
-                }
-            });
-            break;
-        case 40: //down
-            scene.traverse(function(node) {
-                if (node instanceof Chair) {
-                    node.acceleration = new THREE.Vector3(0, 0, -ACCELERATION_RATE);
+        scene.traverse(function(node) {
+            if (node instanceof Chair) {
+                node.acceleration = new THREE.Vector3(0, 0, ACCELERATION_RATE);
                 node.friction = false;
-                }
-            });
+            }
+        });
+        break;
+        case 40: //down
+        scene.traverse(function(node) {
+            if (node instanceof Chair) {
+                node.acceleration = new THREE.Vector3(0, 0, -ACCELERATION_RATE);
+                node.friction = false;
+            }
+        });
+        break;
+        case 37: //left
+        scene.traverse(function(node) {
+            if (node instanceof Chair) {
+                node.angle += Math.PI/2; 
+                node.rotateOnAxis(Y_AXIS, Math.PI/2);
+            }
+        });
             break;
     }
 }
@@ -413,7 +426,7 @@ function onKeyUp(e) {
         case 40: //down
             scene.traverse(function(node) {
                 if (node instanceof Chair) {
-                    node.acceleration.multiplyScalar(-1 * ACCELERATION_RATE * Math.cos(node.velocity.angleTo(node.acceleration)));
+                    node.acceleration.multiplyScalar(-1 * ACCELERATION_RATE * Math.cos(node.velocity.angleTo(node.acceleration))).applyAxisAngle(Y_AXIS, node.angle);
                     node.friction = true;
                 }
             });
