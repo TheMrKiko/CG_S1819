@@ -1,10 +1,10 @@
 var scene, renderer;
-var camera= new Array(3);
-var camera_activa= 0 ;
+var cameras = new Array(3);
+var camera_activa = 0;
 
 var nowDate;
 
-const ACCELERATION_RATE = 2;
+const ACCELERATION_RATE = 1;
 
 class Object3D extends THREE.Object3D {
 
@@ -277,101 +277,94 @@ function createScene() {
     scene.add(new Lamp(15, 0, 0))
 }
 
-function createCameraTopo() {
+function createCamera(index, x, y, z) {
     "use strict";
-    camera[0] = new THREE.OrthographicCamera(
-        -25,
-         25,
-         25, 
-        -25,
+    cameras[index] = new THREE.OrthographicCamera(
+        -window.innerWidth / 25,
+        window.innerWidth / 25,
+        window.innerHeight / 25, 
+        -window.innerHeight /25,
         1, 
         1000
        );
-       camera[0].position.x = 0;
-       camera[0].position.y = 40;
-       camera[0].position.z = 0;
+       cameras[index].position.set(x, y, z)
    
-       camera[0].lookAt(scene.position);
+       cameras[index].lookAt(scene.position);
 }
 
-function createCameraLateral(){
-    camera[1] = new THREE.OrthographicCamera(
-        -25,
-         25,
-         25, 
-        -25,
-        1, 
-        1000
-       );
-       camera[1].position.x = 40;
-       camera[1].position.y = 0;
-       camera[1].position.z = 0;
-   
-       camera[1].lookAt(scene.position);
+function createCameraTop() {
+    "use strict";
+
+    createCamera(0, 0, 40, 0);
 }
 
-function createCameraFrontal() {
+function createCameraSide() {
     "use strict";
-    camera[2] = new THREE.OrthographicCamera(
-        -25,
-         25,
-         25, 
-        -25,
-        1, 
-        1000
-       );
-       camera[2].position.x = 0;
-       camera[2].position.y = 0;
-       camera[2].position.z = 40;
-   
-       camera[2].lookAt(scene.position);
+
+    createCamera(1, 40, 0, 0);
+}
+
+function createCameraFront() {
+    "use strict";
+    
+    createCamera(2, 0, 0, 40)
 }
 
 function onResize() {
     "use strict";
 
     renderer.setSize(window.innerWidth, window.innerHeight);
- 
-   
 
     if (window.innerHeight > 0 && window.innerWidth > 0){
-        resizeCameraTopo(scale_height);
-        resizeCameraFrontal(scale_height);
-        resizeCameraLateral(scale_height);
-    }
-    else{
-        resizeCameraTopo(scale_height);
-        resizeCameraFrontal(scale_height);
-        resizeCameraLateral(scale_height);
+        var scale = window.innerWidth / window.innerHeight;
+        resizeCameraTop(scale);
+        resizeCameraFront(scale);
+        resizeCameraSide(scale);
     }
 }
 
-function resizeCameraLateral(scale) {
-    camera[0].aspect = window.innerWidth / window.innerHeight;
-    camera[0].updateProjectionMatrix();
+function resizeCamera(index, ) {
+    "use strict";
+
+    //cameras[index].aspect = scale;
+    cameras[index].updateProjectionMatrix();
 }
 
-function resizeCameraTopo(scale) {
-    camera[1].aspect = window.innerWidth / window.innerHeight;
-    camera[1].updateProjectionMatrix();
-}
-function resizeCameraFrontal(scale) {
-    camera.aspect[2] = window.innerWidth / window.innerHeight;
-    camera[2].updateProjectionMatrix();
+function resizeCameraSide(scale) {
+    "use strict";
+
+    resizeCamera(0);
 }
 
-function switch_camera(number) {
-    camera_activa = number;
+function resizeCameraTop(scale) {
+    "use strict";
+
+    resizeCamera(1);
+}
+
+function resizeCameraFront(scale) {
+    "use strict";
+
+    resizeCamera(2);
+}
+
+function switchCamera(index) {
+    "use strict";
+    
+    camera_activa = index;
 }
 
 function onKeyDown(e) {
     "use strict";
     switch (e.keyCode) {
         case 49: //1
-            switch_camera(1);
+            switchCamera(0);
             break;
-         case 51: //3
-            switch_camera(2);
+         case 50: //2
+            switchCamera(1);
+            break;
+        case 51: //3
+            switchCamera(2);
             break;
         case 65: //A
         case 97: //a
@@ -408,7 +401,6 @@ function onKeyDown(e) {
     }
 }
 
-
 function onKeyUp(e) {
     "use strict";
 
@@ -417,7 +409,8 @@ function onKeyUp(e) {
         case 40: //down
             scene.traverse(function(node) {
                 if (node instanceof Chair) {
-                    node.acceleration.multiplyScalar(-1 * ACCELERATION_RATE * Math.cos(node.velocity.angleTo(node.acceleration)));                    node.friction = true;
+                    node.acceleration.multiplyScalar(-1 * ACCELERATION_RATE * Math.cos(node.velocity.angleTo(node.acceleration)));
+                    node.friction = true;
                 }
             });
         break;
@@ -426,7 +419,7 @@ function onKeyUp(e) {
 function render() {
     "use strict";
 
-    renderer.render(scene, camera[camera_activa]);
+    renderer.render(scene, cameras[camera_activa]);
 }
 
 function init() {
@@ -439,9 +432,9 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCameraTopo();
-    createCameraLateral();
-    createCameraFrontal();
+    createCameraTop();
+    createCameraSide();
+    createCameraFront();
 
     render();
 
