@@ -4,11 +4,12 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION = 3;
-const FRICTION = 1;
-const TILTANGLE = Math.PI/64;
-const Y_AXIS = new THREE.Vector3(0, 1, 0);
+const ACCELERATION = 4;
+const FRICTION = 2;
+const TILTANGLE = Math.PI/6;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
 class Object3D extends THREE.Object3D {
 
@@ -167,9 +168,8 @@ class Chair extends Object3D {
     constructor(x, y, z) {
         super();
         this.angle = 0;
-        this.chairWheels= new Array(4) ;
-        this.addChairSeat(0, 0, 0);
-        this.addChairBack(0, 0.5, -3);
+        this.chairWheels = new Array(4);
+        this.chairSeatAndBack = this.addChairSeatAndBack(0, 0, 0);
         this.addChairAxe(0, -0.5, 0);
         this.addChairLeg(0, -4, 0, 0);
         this.addChairLeg(0, -4, 0, Math.PI/2);
@@ -182,7 +182,7 @@ class Chair extends Object3D {
         this.position.set(x, y, z);
     }
 
-    addChairSeat(x, y, z) {
+    addChairSeatAndBack(x, y, z) {
         "use strict";
 
         var chairSeatMaterial = new THREE.MeshBasicMaterial({
@@ -194,10 +194,14 @@ class Chair extends Object3D {
         var chairSeatMesh = new THREE.Mesh(chairSeatGeometry, chairSeatMaterial);
 
         chairSeatMesh.position.set(x, y, z);
+
+        chairSeatMesh.add(this.makeChairBack(0, 0.5, -3));
+
         this.add(chairSeatMesh);
+        return chairSeatMesh;
     }
 
-    addChairBack(x, y, z) {
+    makeChairBack(x, y, z) {
         "use strict";
 
         var chairBackMaterial = new THREE.MeshBasicMaterial({
@@ -209,7 +213,8 @@ class Chair extends Object3D {
         var chairBackMesh = new THREE.Mesh(chairBackGeometry, chairBackMaterial);
 
         chairBackMesh.position.set(x, y + 4.5, z);
-        this.add(chairBackMesh);
+        
+        return chairBackMesh;
     }
 
     addChairAxe(x, y, z) {
@@ -256,34 +261,53 @@ class Chair extends Object3D {
         var chairWheelMesh = new THREE.Mesh(chairWheelGeometry, chairWheelMaterial);
 
         chairWheelMesh.position.set(x, y, z);
+        chairWheelMesh.rotateY(Math.PI/2)
         this.add(chairWheelMesh);
         return chairWheelMesh;
     }
 
     animate(timeDiff) {
-        "use strict";
+        "use strict"; 
 
         var tiltedAcceleration = this.acceleration.clone()
         var oldVelocity = this.velocity.clone();
 
         if (this.friction) {
             tiltedAcceleration = this.velocity.clone().normalize().multiplyScalar(this.acceleration.length() * -1);
-        } else {   
+        } else {
             tiltedAcceleration.applyAxisAngle(Y_AXIS, this.angle);
         }
+        
         this.velocity.add(tiltedAcceleration.multiplyScalar(timeDiff));
         
-        this.chairWheels.forEach(function(wheel) {
-            wheel.setRotationFromAxisAngle(Y_AXIS, this.velocity.angleTo(X_AXIS));
-        }, this);
+        if (this.velocity.length()) {
+            this.chairWheels.forEach(function(wheel) {
 
-        if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
+                wheel.setRotationFromAxisAngle(Y_AXIS, calcAngleToRotate(this.velocity));
+                
+            }, this);
+        }
+
+        if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))) {
             this.friction = false;
             this.acceleration = new THREE.Vector3( );
             this.velocity = new THREE.Vector3( );
         } else {
+
             this.position.add(oldVelocity.multiplyScalar(timeDiff)).add(this.velocity.clone().multiplyScalar(timeDiff/2));
         }
+    }
+
+    rotateUpperPartOfChairTaBomEsteNomeFrancisco(angle) {
+        this.chairSeatAndBack.rotateY(angle);
+    }
+}
+ 
+const calcAngleToRotate = (vector) => {
+    if ((vector.x >= 0 && vector.z >=0) || (vector.x <= 0 && vector.z >= 0)) {
+        return Math.PI * 2 - vector.angleTo(X_AXIS);
+    } else {
+        return vector.angleTo(X_AXIS);
     }
 }
 
@@ -389,7 +413,7 @@ function onKeyDown(e) {
         scene.traverse(function(node) {
             if (node instanceof Chair) {
                 node.angle += TILTANGLE; 
-                //node.rotateOnAxis(Y_AXIS, TILTANGLE);
+                node.rotateUpperPartOfChairTaBomEsteNomeFrancisco(TILTANGLE);
             }
         });
             break;
@@ -397,7 +421,7 @@ function onKeyDown(e) {
         scene.traverse(function(node) {
             if (node instanceof Chair) {
                 node.angle -= TILTANGLE; 
-                //node.rotateOnAxis(Y_AXIS, -TILTANGLE);
+                node.rotateUpperPartOfChairTaBomEsteNomeFrancisco(-TILTANGLE);
             }
         });
             break;
