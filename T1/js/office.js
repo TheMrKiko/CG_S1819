@@ -4,10 +4,11 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION = 2;
+const ACCELERATION = 3;
 const FRICTION = 1;
-
+const TILTANGLE = Math.PI/64;
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
+const X_AXIS = new THREE.Vector3(1, 0, 0);
 
 class Object3D extends THREE.Object3D {
 
@@ -165,16 +166,17 @@ class Chair extends Object3D {
     
     constructor(x, y, z) {
         super();
-this.angle=0
+        this.angle = 0;
+        this.chairWheels= new Array(4) ;
         this.addChairSeat(0, 0, 0);
         this.addChairBack(0, 0.5, -3);
         this.addChairAxe(0, -0.5, 0);
         this.addChairLeg(0, -4, 0, 0);
         this.addChairLeg(0, -4, 0, Math.PI/2);
-        this.addChairWeel(0, -5, 3);
-        this.addChairWeel(0, -5, -3);
-        this.addChairWeel(3, -5, 0);
-        this.addChairWeel(-3, -5, 0);
+        this.chairWheels[0] = this.addChairWheel(0, -5, 3);
+        this.chairWheels[1] = this.addChairWheel(0, -5, -3);
+        this.chairWheels[2] = this.addChairWheel(3, -5, 0);
+        this.chairWheels[3] = this.addChairWheel(-3, -5, 0);
         this.add(new THREE.AxisHelper(3));
 
         this.position.set(x, y, z);
@@ -242,19 +244,20 @@ this.angle=0
         this.add(chairLegMesh);
     }
 
-    addChairWeel(x, y, z) {
+    addChairWheel(x, y, z) {
         "use strict";
 
-        var chairWeelMaterial = new THREE.MeshBasicMaterial({
+        var chairWheelMaterial = new THREE.MeshBasicMaterial({
             color: 0xcccccc,
             wireframe: true
         });
-        var chairWeelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
+        var chairWheelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
 
-        var chairWeelMesh = new THREE.Mesh(chairWeelGeometry, chairWeelMaterial);
+        var chairWheelMesh = new THREE.Mesh(chairWheelGeometry, chairWheelMaterial);
 
-        chairWeelMesh.position.set(x, y, z);
-        this.add(chairWeelMesh);
+        chairWheelMesh.position.set(x, y, z);
+        this.add(chairWheelMesh);
+        return chairWheelMesh;
     }
 
     animate(timeDiff) {
@@ -264,11 +267,15 @@ this.angle=0
         var oldVelocity = this.velocity.clone();
 
         if (this.friction) {
-            tiltedAcceleration.multiplyScalar(-1 * Math.cos(this.velocity.angleTo(this.acceleration))); //TODO Fazer a aceleracao ter a mesma direçao que a velocidade
+            tiltedAcceleration = this.velocity.clone().normalize().multiplyScalar(this.acceleration.length() * -1);
         } else {   
             tiltedAcceleration.applyAxisAngle(Y_AXIS, this.angle);
         }
-        this.velocity.add(tiltedAcceleration.clone().multiplyScalar(timeDiff));
+        this.velocity.add(tiltedAcceleration.multiplyScalar(timeDiff));
+        
+        this.chairWheels.forEach(function(wheel) {
+            wheel.setRotationFromAxisAngle(Y_AXIS, this.velocity.angleTo(X_AXIS));
+        }, this);
 
         if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))){
             this.friction = false;
@@ -330,7 +337,7 @@ function resizeCamera(index) {
 
 function switchCamera(index) {
     "use strict";
-    
+
     activeCamera = index;
 }
 
@@ -381,8 +388,16 @@ function onKeyDown(e) {
         case 37: //left
         scene.traverse(function(node) {
             if (node instanceof Chair) {
-                node.angle += Math.PI/2; 
-                node.rotateOnAxis(Y_AXIS, Math.PI/2);
+                node.angle += TILTANGLE; 
+                //node.rotateOnAxis(Y_AXIS, TILTANGLE);
+            }
+        });
+            break;
+        case 39: //right
+        scene.traverse(function(node) {
+            if (node instanceof Chair) {
+                node.angle -= TILTANGLE; 
+                //node.rotateOnAxis(Y_AXIS, -TILTANGLE);
             }
         });
             break;
@@ -398,7 +413,7 @@ function onKeyUp(e) {
             scene.traverse(function(node) {
                 if (node instanceof Chair) {
                     node.friction = true;
-                    nove.acceleration.multiplyScalar(- FRICTION);
+                    node.acceleration.multiplyScalar(- FRICTION);
                 }
             });
         break;
