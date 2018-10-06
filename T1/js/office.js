@@ -6,7 +6,7 @@ var nowDate;
 
 const ACCELERATION = 4;
 const FRICTION = 2;
-const TILTANGLE = Math.PI/6;
+const TILTANGLE = Math.PI/64;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -271,14 +271,15 @@ class Chair extends Object3D {
 
         var tiltedAcceleration = this.acceleration.clone()
         var oldVelocity = this.velocity.clone();
+        var modulevelocity
 
         if (this.friction) {
             tiltedAcceleration = this.velocity.clone().normalize().multiplyScalar(this.acceleration.length() * -1);
         } else {
-            tiltedAcceleration.applyAxisAngle(Y_AXIS, this.angle);
+            //tiltedAcceleration.applyAxisAngle(Y_AXIS, this.angle);
         }
         
-        this.velocity.add(tiltedAcceleration.multiplyScalar(timeDiff));
+        this.velocity.add(tiltedAcceleration.multiplyScalar(timeDiff)).applyAxisAngle(Y_AXIS, this.angle);
         
         if (this.velocity.length()) {
             this.chairWheels.forEach(function(wheel) {
