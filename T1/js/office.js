@@ -4,9 +4,9 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION = 4;
-const FRICTION = 2;
-const TILTANGLE = Math.PI/64;
+const ACCELERATION = 3;
+const FRICTION = 3;
+const ANGULAR_VELOCITY = Math.PI/2;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -18,6 +18,7 @@ class Object3D extends THREE.Object3D {
 
         this.velocity = new THREE.Vector3();
         this.acceleration = new THREE.Vector3();
+        this.angularVelocity = 0;
         this.angle = 0;
         this.friction;
     }
@@ -167,6 +168,7 @@ class Chair extends Object3D {
     
     constructor(x, y, z) {
         super();
+        this.angularVelocity = 0;
         this.angle = 0;
         this.chairWheels = new Array(4);
         this.chairSeatAndBack = this.addChairSeatAndBack(0, 0, 0);
@@ -268,37 +270,40 @@ class Chair extends Object3D {
 
     animate(timeDiff) {
         "use strict"; 
-
-        var tiltedAcceleration = this.acceleration.clone()
+        
+        var clonedAcceleration = this.acceleration.clone()
+        var tiltedVelocity = this.velocity.clone()
         var oldVelocity = this.velocity.clone();
-        var modulevelocity
-
+        var oldAngle = this.angle;
+        
+        this.angle += this.angularVelocity*timeDiff;
+        this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(this.angularVelocity*timeDiff);
+        
         if (this.friction) {
-            tiltedAcceleration = this.velocity.clone().normalize().multiplyScalar(this.acceleration.length() * -1);
-        } else {
-            //tiltedAcceleration.applyAxisAngle(Y_AXIS, this.angle);
+            clonedAcceleration.multiplyScalar(-1 * Math.cos(clonedAcceleration.angleTo(this.velocity)))
         }
         
-        this.velocity.add(tiltedAcceleration.multiplyScalar(timeDiff)).applyAxisAngle(Y_AXIS, this.angle);
+        this.velocity.add(clonedAcceleration.multiplyScalar(timeDiff));
+        
+        tiltedVelocity.applyAxisAngle(Y_AXIS, this.angle);
         
         if (this.velocity.length()) {
             this.chairWheels.forEach(function(wheel) {
-
-                wheel.setRotationFromAxisAngle(Y_AXIS, calcAngleToRotate(this.velocity));
+                
+                wheel.setRotationFromAxisAngle(Y_AXIS, calcAngleToRotate(tiltedVelocity));
                 
             }, this);
         }
-
-        if (this.friction && Math.round(this.velocity.angleTo(oldVelocity))) {
+        if (this.friction && Math.round(tiltedVelocity.angleTo(oldVelocity.applyAxisAngle(Y_AXIS, oldAngle)))) {
             this.friction = false;
             this.acceleration = new THREE.Vector3( );
             this.velocity = new THREE.Vector3( );
         } else {
-
-            this.position.add(oldVelocity.multiplyScalar(timeDiff)).add(this.velocity.clone().multiplyScalar(timeDiff/2));
+            
+            this.position.add(tiltedVelocity.multiplyScalar(timeDiff));
         }
     }
-
+    
     rotateUpperPartOfChairTaBomEsteNomeFrancisco(angle) {
         this.chairSeatAndBack.rotateY(angle);
     }
@@ -413,16 +418,14 @@ function onKeyDown(e) {
         case 37: //left
         scene.traverse(function(node) {
             if (node instanceof Chair) {
-                node.angle += TILTANGLE; 
-                node.rotateUpperPartOfChairTaBomEsteNomeFrancisco(TILTANGLE);
+                node.angularVelocity = ANGULAR_VELOCITY;
             }
         });
-            break;
+        break;
         case 39: //right
         scene.traverse(function(node) {
             if (node instanceof Chair) {
-                node.angle -= TILTANGLE; 
-                node.rotateUpperPartOfChairTaBomEsteNomeFrancisco(-TILTANGLE);
+                node.angularVelocity = -ANGULAR_VELOCITY;
             }
         });
             break;
@@ -441,6 +444,14 @@ function onKeyUp(e) {
                     node.acceleration.multiplyScalar(- FRICTION);
                 }
             });
+        break;
+        case 37: //left
+        case 39: //right
+        scene.traverse(function(node) {
+            if (node instanceof Chair) {
+                node.angularVelocity = 0;
+            }
+        });
         break;
     }
 }
