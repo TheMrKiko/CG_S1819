@@ -279,7 +279,7 @@ class Chair extends Object3D {
         var oldAngle = this.angle;
         var tiltedVelocity;
         
-        this.angle += this.angularVelocity*timeDiff;
+        this.angle += this.angularVelocity * timeDiff;
         this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(this.angularVelocity*timeDiff);
         
         if (this.friction) {
@@ -292,12 +292,20 @@ class Chair extends Object3D {
         tiltedVelocity.applyAxisAngle(Y_AXIS, this.angle);
 
         var angleToRotateY = calcAngleToRotate(tiltedVelocity)
-        var diffToRotateY = angleToRotateY - this.prevRotationY
-        this.prevRotationY = angleToRotateY ? angleToRotateY : this.prevRotationY
+        var diffToRotateY;
+        if (this.friction && this.velocity.z*oldVelocity.z <= 0) {
+            
+            diffToRotateY = 0
+        } else {
+            diffToRotateY = angleToRotateY - this.prevRotationY
+            this.prevRotationY = angleToRotateY ? angleToRotateY : this.prevRotationY
 
+        }
         if (this.velocity.z) {
             this.chairWheels.forEach(function(wheel) {
-                wheel.rotateZ(timeDiff* -1 * Math.abs(this.velocity.z));
+                console.log(oldVelocity.z, this.velocity)
+                console.log(diffToRotateY, angleToRotateY, this.prevRotationY)
+                wheel.rotateZ(timeDiff * -1 * Math.abs(this.velocity.z));
                 wheel.rotateOnWorldAxis(Y_AXIS, diffToRotateY);
             }, this);
         }
