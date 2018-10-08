@@ -4,7 +4,7 @@ var activeCamera = 0;
 
 var nowDate;
 
-const ACCELERATION = 3;
+const ACCELERATION = 5;
 const FRICTION = 3;
 const ANGULAR_VELOCITY = Math.PI/2;
 const ASPECT_RATIO = 16/9;
@@ -172,6 +172,7 @@ class Chair extends Object3D {
         super();
         this.angularVelocity = 0;
         this.angle = 0;
+        this.prevRotationY = Math.PI / 2;
         this.chairWheels = new Array(4);
         this.chairSeatAndBack = this.addChairSeatAndBack(0, 0, 0);
         this.addChairAxe(0, -0.5, 0);
@@ -274,9 +275,9 @@ class Chair extends Object3D {
         "use strict"; 
         
         var clonedAcceleration = this.acceleration.clone()
-        var tiltedVelocity = this.velocity.clone()
         var oldVelocity = this.velocity.clone();
         var oldAngle = this.angle;
+        var tiltedVelocity;
         
         this.angle += this.angularVelocity*timeDiff;
         this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(this.angularVelocity*timeDiff);
@@ -286,17 +287,21 @@ class Chair extends Object3D {
         }
         
         this.velocity.add(clonedAcceleration.multiplyScalar(timeDiff));
+        tiltedVelocity = this.velocity.clone()
         
         tiltedVelocity.applyAxisAngle(Y_AXIS, this.angle);
-        
-        if (this.velocity.length()) {
+
+        var angleToRotateY = calcAngleToRotate(tiltedVelocity)
+        var diffToRotateY = angleToRotateY - this.prevRotationY
+        this.prevRotationY = angleToRotateY ? angleToRotateY : this.prevRotationY
+
+        if (this.velocity.z) {
             this.chairWheels.forEach(function(wheel) {
-                
-                wheel.setRotationFromAxisAngle(Y_AXIS, calcAngleToRotate(tiltedVelocity));
-                
+                wheel.rotateZ(timeDiff* -1 * Math.abs(this.velocity.z));
+                wheel.rotateOnWorldAxis(Y_AXIS, diffToRotateY);
             }, this);
         }
-        if (this.friction && Math.round(tiltedVelocity.angleTo(oldVelocity.applyAxisAngle(Y_AXIS, oldAngle)))) {
+        if (this.friction && this.velocity.z*oldVelocity.z <= 0) {
             this.friction = false;
             this.acceleration = new THREE.Vector3( );
             this.velocity = new THREE.Vector3( );
@@ -312,7 +317,10 @@ class Chair extends Object3D {
 }
  
 const calcAngleToRotate = (vector) => {
-    if ((vector.x >= 0 && vector.z >=0) || (vector.x <= 0 && vector.z >= 0)) {
+    
+    if (vector.x == 0 && vector.z == 0)  {
+        return 0
+    } else if ((vector.x >= 0 && vector.z >=0) || (vector.x <= 0 && vector.z >= 0)) {
         return Math.PI * 2 - vector.angleTo(X_AXIS);
     } else {
         return vector.angleTo(X_AXIS);
