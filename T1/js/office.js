@@ -172,7 +172,7 @@ class Chair extends Object3D {
         super();
         this.angularVelocity = 0;
         this.angle = 0;
-        this.prevRotationY = Math.PI / 2;
+        this.rotatedStopped = 0;
         this.chairWheels = new Array(4);
         this.chairSeatAndBack = this.addChairSeatAndBack(0, 0, 0);
         this.addChairAxe(0, -0.5, 0);
@@ -278,36 +278,32 @@ class Chair extends Object3D {
         var oldVelocity = this.velocity.clone();
         var oldAngle = this.angle;
         var tiltedVelocity;
-        
-        this.angle += this.angularVelocity * timeDiff;
-        this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(this.angularVelocity*timeDiff);
+        var rotateDiff = this.angularVelocity*timeDiff
+        this.angle += rotateDiff;
+        this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(rotateDiff);
         
         if (this.friction) {
             clonedAcceleration.multiplyScalar(-1 * Math.cos(clonedAcceleration.angleTo(this.velocity)))
         }
         
         this.velocity.add(clonedAcceleration.multiplyScalar(timeDiff));
+
         tiltedVelocity = this.velocity.clone()
         
         tiltedVelocity.applyAxisAngle(Y_AXIS, this.angle);
 
-        var angleToRotateY = calcAngleToRotate(tiltedVelocity)
-        var diffToRotateY;
-        if (this.friction && this.velocity.z*oldVelocity.z <= 0) {
-            
-            diffToRotateY = 0
-        } else {
-            diffToRotateY = angleToRotateY - this.prevRotationY
-            this.prevRotationY = angleToRotateY ? angleToRotateY : this.prevRotationY
-
-        }
         if (this.velocity.z) {
+
             this.chairWheels.forEach(function(wheel) {
-                console.log(oldVelocity.z, this.velocity)
-                console.log(diffToRotateY, angleToRotateY, this.prevRotationY)
-                wheel.rotateZ(timeDiff * -1 * Math.abs(this.velocity.z));
-                wheel.rotateOnWorldAxis(Y_AXIS, diffToRotateY);
+                wheel.rotateOnWorldAxis(Y_AXIS, this.rotatedStopped + rotateDiff);
+                wheel.rotateZ(timeDiff * this.velocity.z);
             }, this);
+
+            this.rotatedStopped = 0;
+
+        } else {
+
+            this.rotatedStopped += rotateDiff;
         }
         if (this.friction && this.velocity.z*oldVelocity.z <= 0) {
             this.friction = false;
@@ -321,17 +317,6 @@ class Chair extends Object3D {
     
     rotateUpperPartOfChairTaBomEsteNomeFrancisco(angle) {
         this.chairSeatAndBack.rotateY(angle);
-    }
-}
- 
-const calcAngleToRotate = (vector) => {
-    
-    if (vector.x == 0 && vector.z == 0)  {
-        return 0
-    } else if ((vector.x >= 0 && vector.z >=0) || (vector.x <= 0 && vector.z >= 0)) {
-        return Math.PI * 2 - vector.angleTo(X_AXIS);
-    } else {
-        return vector.angleTo(X_AXIS);
     }
 }
 
