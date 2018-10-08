@@ -7,6 +7,8 @@ var nowDate;
 const ACCELERATION = 3;
 const FRICTION = 3;
 const ANGULAR_VELOCITY = Math.PI/2;
+const ASPECT_RATIO = 16/9;
+const PLANE_HEIGHT = 25;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -330,11 +332,16 @@ function createScene() {
 
 function createCamera(index, x, y, z) {
     "use strict";
+
+    var sizes = calcCameraSize()
+    var width = sizes[0]
+    var height = sizes[1]
+
     cameras[index] = new THREE.OrthographicCamera(
-        - window.innerWidth / 25,
-        window.innerWidth / 25,
-        window.innerHeight / 25,
-        - window.innerHeight /25,
+        - width / 2,
+        width / 2,
+        height / 2,
+        - height / 2,
         -1000,
         1000
     );
@@ -343,25 +350,43 @@ function createCamera(index, x, y, z) {
     cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
 }
 
+function calcCameraSize() {
+    
+    var scale = window.innerWidth / window.innerHeight;
+
+    if (scale > ASPECT_RATIO) { // largura maior
+
+        var width = scale * PLANE_HEIGHT;
+        var height = PLANE_HEIGHT;
+    } else {
+
+        var width = ASPECT_RATIO * PLANE_HEIGHT;
+        var height = width / scale;
+    }
+
+    return [width, height]
+}
+
 function onResize() {
     "use strict";
     
     renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    var sizes = calcCameraSize()
+    var width = sizes[0]
+    var height = sizes[1]
 
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        var scale = window.innerWidth / window.innerHeight;
-        resizeCamera(0);
-        resizeCamera(1);
-        resizeCamera(2);
-    }
+    resizeCamera(0, width, height);
+    resizeCamera(1, width, height);
+    resizeCamera(2, width, height);
 }
 
-function resizeCamera(index) {
+function resizeCamera(index, width, height) {
     "use strict";
-	cameras[index].left = - window.innerWidth / 25;
-	cameras[index].right = window.innerWidth / 25;
-	cameras[index].top = window.innerHeight / 25;
-	cameras[index].bottom = - window.innerHeight / 25;
+	cameras[index].left = - width / 2;
+	cameras[index].right = width / 2;
+	cameras[index].top = height / 2;
+	cameras[index].bottom = - height / 2;
     cameras[index].updateProjectionMatrix();
 }
 
