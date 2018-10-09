@@ -38,7 +38,7 @@ class Lamp extends Object3D {
         this.addReflector(0, 13, 0);
         this.addHolder(0, 14.5, 0);
         this.addLamp(0, 15 ,0);
-        this.add(new THREE.AxisHelper(3));
+        //this.add(new THREE.AxisHelper(3));
 
         this.position.set(x, y, z);
     }
@@ -130,7 +130,7 @@ class Table extends Object3D {
         this.addTableLeg(-8, -0.5, 5);
         this.addTableLeg(8, -0.5, 5);
         this.addTableLeg(8, -0.5, -5);
-        this.add(new THREE.AxisHelper(3));
+        //this.add(new THREE.AxisHelper(3));
 
         this.position.set(x, y, x);
     }
@@ -182,7 +182,7 @@ class Chair extends Object3D {
         this.chairWheels[1] = this.addChairWheel(0, -5, -3);
         this.chairWheels[2] = this.addChairWheel(3, -5, 0);
         this.chairWheels[3] = this.addChairWheel(-3, -5, 0);
-        this.add(new THREE.AxisHelper(3));
+        //this.add(new THREE.AxisHelper(3));
 
         this.position.set(x, y, z);
     }
