@@ -7,7 +7,7 @@ var nowDate;
 const ACCELERATION = 5;
 const FRICTION = 3;
 const ANGULAR_VELOCITY = Math.PI/2;
-const ASPECT_RATIO = 16/9;
+const ASPECT_RATIO = 16/10;
 const PLANE_HEIGHT = 25;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
@@ -77,7 +77,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var refletorMaterial = new THREE.MeshBasicMaterial({
-            color: "rgba(255, 255, 26)",
+            color: 0xffff1a,
             wireframe: true,
 			opacity: 0.3,
 			transparent: true
@@ -261,7 +261,7 @@ class Chair extends Object3D {
             color: 0xcccccc,
             wireframe: true
         });
-        var chairWheelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 5);
+        var chairWheelGeometry = new THREE.TorusGeometry(0.4, 0.2, 4, 8);
 
         var chairWheelMesh = new THREE.Mesh(chairWheelGeometry, chairWheelMaterial);
 
@@ -276,11 +276,10 @@ class Chair extends Object3D {
         
         var clonedAcceleration = this.acceleration.clone()
         var oldVelocity = this.velocity.clone();
-        var oldAngle = this.angle;
         var tiltedVelocity;
         var rotateDiff = this.angularVelocity*timeDiff
         this.angle += rotateDiff;
-        this.rotateUpperPartOfChairTaBomEsteNomeFrancisco(rotateDiff);
+        this.rotateUpperPartOfChair(rotateDiff);
         
         if (this.friction) {
             clonedAcceleration.multiplyScalar(-1 * Math.cos(clonedAcceleration.angleTo(this.velocity)))
@@ -315,7 +314,7 @@ class Chair extends Object3D {
         }
     }
     
-    rotateUpperPartOfChairTaBomEsteNomeFrancisco(angle) {
+    rotateUpperPartOfChair(angle) {
         this.chairSeatAndBack.rotateY(angle);
     }
 }
