@@ -4,9 +4,10 @@ var activeCamera = 0;
 
 var clock;
 
-const ASPECT_RATIO = 16/10;
-const PLANE_HEIGHT = 25;
+const ASPECT_RATIO = 2/1;
+const PLANE_HEIGHT = 55;
 const WALL_HEIGHT = 10;
+const WALL_WIDTH = (ratio) => WALL_HEIGHT * 5 * ratio
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -47,28 +48,32 @@ class Ball extends Object3D {
     }
 }
 
-class Wall extends Object3D {
+class Ring extends Object3D {
     constructor(x, y, z) {
         super();
 
-        this.addWall(0, 0, 0);
+        this.addWall(0, 0, WALL_WIDTH(1) / 2, 2, 0);
+        this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI/2);
+        this.addWall(0, 0, - WALL_WIDTH(1) / 2, 2, Math.PI);
+        this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI*3/2);
         this.add(new THREE.AxesHelper(WALL_HEIGHT));
 
         this.position.set(x, y, x);
     }
 
-    addWall(x, y, z) {
+    addWall(x, y, z, widthRatio, rotY) {
         "use strict";
 
         var wallMaterial = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             wireframe: true
         });
-        var wallGeometry = new THREE.CylinderGeometry(WALL_HEIGHT*2,WALL_HEIGHT*2, WALL_HEIGHT,4,4,true);
+        var wallGeometry = new THREE.BoxGeometry(WALL_WIDTH(widthRatio), WALL_HEIGHT, 1);
 
         var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
 
         wallMesh.position.set(x, y, z);
+        wallMesh.rotateY(rotY);
         this.add(wallMesh);
     }
 }
@@ -79,11 +84,11 @@ function createScene() {
     scene = new THREE.Scene();
     
     scene.add(new THREE.AxesHelper(5));
-    scene.add(new Ball(0,0,0));
-    scene.add(new Wall(0,0,0))
+    scene.add(new Ball(0, 0, 0));
+    scene.add(new Ring(0, 0, 0))
 }
 
-function createCamera(index, x, y, z) {
+function createOrtographicCamera(index, x, y, z) {
     "use strict";
 
     var sizes = calcCameraSize()
@@ -100,7 +105,7 @@ function createCamera(index, x, y, z) {
     );
     cameras[index].position.set(x, y, z)
     
-    cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
+    cameras[index].lookAt(new THREE.Vector3(0, 0, 0));
 }
 
 function calcCameraSize() {
@@ -120,6 +125,14 @@ function calcCameraSize() {
     return [width, height]
 }
 
+function createPerspectiveCamera(index,x,y,z){
+    "use strict"
+    cameras[index] = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,1000);
+    cameras[index].position.set(x,y,z);
+    cameras[index].lookAt(0,0,0);
+
+}
+
 function onResize() {
     "use strict";
     
@@ -129,18 +142,33 @@ function onResize() {
     var width = sizes[0]
     var height = sizes[1]
 
-    resizeCamera(0, width, height);
-    resizeCamera(1, width, height);
-    resizeCamera(2, width, height);
+    resizeCameraOrtographic(0, width, height);
+    resizeCameraPerspective(1);
+    //resizeCamera(2, width, height);
 }
 
-function resizeCamera(index, width, height) {
+function resizeCameraOrtographic(index, width, height) {
     "use strict";
 	cameras[index].left = - width / 2;
 	cameras[index].right = width / 2;
 	cameras[index].top = height / 2;
 	cameras[index].bottom = - height / 2;
     cameras[index].updateProjectionMatrix();
+
+}function resizeCameraPerspective(index) {
+    'use strict';
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    
+    var sizes = calcCameraSize()
+    var width = sizes[0]
+    var height = sizes[1]
+
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        cameras[index].aspect = width / height;
+        cameras[index].updateProjectionMatrix();
+    }
+
 }
 
 function switchCamera(index) {
@@ -196,9 +224,9 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera(0, 0, 20, 0);
-    createCamera(1, 30, 8.5, 0);
-    createCamera(2, 0, 8.5, 30);
+    createOrtographicCamera(0, 0, 20, 0);
+    createPerspectiveCamera(1,WALL_WIDTH(1),WALL_WIDTH(1),WALL_WIDTH(1));
+   // createPerspectiveCamera(2, 0, 8.5, 30);
 
     render();
 
