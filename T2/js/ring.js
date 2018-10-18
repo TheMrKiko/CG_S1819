@@ -6,6 +6,7 @@ var clock;
 
 const ASPECT_RATIO = 16/10;
 const PLANE_HEIGHT = 25;
+const WALL_HEIGHT = 10;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -20,29 +21,55 @@ class Object3D extends THREE.Object3D {
     }
 }
 
-class Table extends Object3D {
+class Ball extends Object3D {
     constructor(x, y, z) {
         super();
 
-        this.addTableTop(0, 0, 0);
-        //this.add(new THREE.AxesHelper(3));
+        this.addBall(0, 0, 0);
+        this.add(new THREE.AxesHelper(WALL_HEIGHT/2));
 
         this.position.set(x, y, x);
     }
 
-    addTableTop(x, y, z) {
+    addBall(x, y, z) {
         "use strict";
 
-        var tableTopMaterial = new THREE.MeshBasicMaterial({
-            color: 0x4d2600,
+        var ballMaterial = new THREE.MeshBasicMaterial({
+            color: eval('0x'+Math.floor(Math.random()*16777215).toString(16)),
             wireframe: true
         });
-        var tableTopGeometry = new THREE.CubeGeometry(18, 1, 12);
+        var ballGeometry = new THREE.SphereGeometry(WALL_HEIGHT/2, 10, 10);
 
-        var tableTopMesh = new THREE.Mesh(tableTopGeometry, tableTopMaterial);
+        var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 
-        tableTopMesh.position.set(x, y, z);
-        this.add(tableTopMesh);
+        ballMesh.position.set(x, y, z);
+        this.add(ballMesh);
+    }
+}
+
+class Wall extends Object3D {
+    constructor(x, y, z) {
+        super();
+
+        this.addWall(0, 0, 0);
+        this.add(new THREE.AxesHelper(WALL_HEIGHT));
+
+        this.position.set(x, y, x);
+    }
+
+    addWall(x, y, z) {
+        "use strict";
+
+        var wallMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        var wallGeometry = new THREE.CylinderGeometry(WALL_HEIGHT*2,WALL_HEIGHT*2, WALL_HEIGHT,4,4,true);
+
+        var wallMesh = new THREE.Mesh(wallGeometry, wallMaterial);
+
+        wallMesh.position.set(x, y, z);
+        this.add(wallMesh);
     }
 }
 
@@ -52,7 +79,8 @@ function createScene() {
     scene = new THREE.Scene();
     
     scene.add(new THREE.AxesHelper(5));
-    scene.add(new Table(0, 8.5, 0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Wall(0,0,0))
 }
 
 function createCamera(index, x, y, z) {
@@ -185,7 +213,7 @@ function animate() {
 
     var timeDiff = clock.getDelta();
     scene.traverse(function(node) {
-        if(node instanceof Object3D) {
+        if (node instanceof Object3D) {
             node.animate(timeDiff);
         }
     })
