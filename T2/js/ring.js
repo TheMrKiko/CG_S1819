@@ -1,13 +1,17 @@
 var scene, renderer;
 var cameras = new Array(3);
 var activeCamera = 0;
+var balls = new Array();
+var ring;
 
 var clock;
 
-const ASPECT_RATIO = 2/1;
+const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
 const WALL_HEIGHT = 10;
-const WALL_WIDTH = (ratio) => WALL_HEIGHT * 5 * ratio
+const BALL_RADIUS = WALL_HEIGHT / 2;
+const WALL_RADIUS = 0.5;
+const WALL_WIDTH = (ratio) => (WALL_HEIGHT * 10 * ratio) / Math.sqrt(5)
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -16,9 +20,19 @@ class Object3D extends THREE.Object3D {
 
     constructor() {
         super();
+        this.velocity = new THREE.Vector3();
+        this.radius = 0;
     }
 
     animate(_) {
+    }
+
+    getDistance(_) {
+
+    }
+
+    checkCollision(_) {
+
     }
 }
 
@@ -27,9 +41,11 @@ class Ball extends Object3D {
         super();
 
         this.addBall(0, 0, 0);
-        this.add(new THREE.AxesHelper(WALL_HEIGHT/2));
-
+        this.add(new THREE.AxesHelper(BALL_RADIUS));
+        this.radius = BALL_RADIUS;
+        this.velocity = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize().multiplyScalar(Math.random() * 5 + 5)
         this.position.set(x, y, x);
+        balls.push(this);
     }
 
     addBall(x, y, z) {
@@ -39,12 +55,16 @@ class Ball extends Object3D {
             color: eval('0x'+Math.floor(Math.random()*16777215).toString(16)),
             wireframe: true
         });
-        var ballGeometry = new THREE.SphereGeometry(WALL_HEIGHT/2, 10, 10);
+        var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 10, 10);
 
         var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
 
         ballMesh.position.set(x, y, z);
         this.add(ballMesh);
+    }
+
+    animate(timeDiff) {
+        this.position.add(this.velocity.clone().multiplyScalar(timeDiff));
     }
 }
 
@@ -55,17 +75,18 @@ class Ring extends Object3D {
         this.addWall(0, 0, WALL_WIDTH(1) / 2, 2, 0);
         this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI/2);
         this.addWall(0, 0, - WALL_WIDTH(1) / 2, 2, Math.PI);
-        this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI*3/2);
+        this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 2 * WALL_RADIUS, Math.PI*3/2);
         this.add(new THREE.AxesHelper(WALL_HEIGHT));
-
+        this.radius = WALL_RADIUS;
         this.position.set(x, y, x);
+        ring = this;
     }
 
     addWall(x, y, z, widthRatio, rotY) {
         "use strict";
 
         var wallMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+            color: 0xfff05f,
             wireframe: true
         });
         var wallGeometry = new THREE.BoxGeometry(WALL_WIDTH(widthRatio), WALL_HEIGHT, 1);
@@ -75,6 +96,10 @@ class Ring extends Object3D {
         wallMesh.position.set(x, y, z);
         wallMesh.rotateY(rotY);
         this.add(wallMesh);
+    }
+
+    checkCollision(ball) { //vai se a bola choca com cada parede
+        
     }
 }
 
@@ -240,10 +265,19 @@ function animate() {
     "use strict";
 
     var timeDiff = clock.getDelta();
+
     scene.traverse(function(node) {
         if (node instanceof Object3D) {
             node.animate(timeDiff);
         }
+    })
+
+    balls.forEach(function(ball, index, balls) {
+        ring.checkCollision(ball);
+        for (var j = index + 1; j < balls.length; j++) {
+            ball.checkCollision(balls[j]);
+        }
+
     })
 
     render();
