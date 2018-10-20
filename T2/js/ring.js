@@ -20,7 +20,8 @@ class Object3D extends THREE.Object3D {
 
     constructor() {
         super();
-        this.velocity = new THREE.Vector3();
+        this.direction;
+        this.velocity = 1
         this.radius = 0;
     }
 
@@ -43,9 +44,11 @@ class Ball extends Object3D {
         this.addBall(0, 0, 0);
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         this.radius = BALL_RADIUS;
-        this.velocity = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize().multiplyScalar(Math.random() * 5 + 5)
+        this.direction = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize();
+        this.velocity = Math.random() * 10 + 10;
         this.position.set(x, y, x);
         balls.push(this);
+        this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS]
     }
 
     addBall(x, y, z) {
@@ -64,22 +67,79 @@ class Ball extends Object3D {
     }
 
     animate(timeDiff) {
-        this.position.add(this.velocity.clone().multiplyScalar(timeDiff));
+        this.position.add(this.direction.clone().multiplyScalar(this.velocity * timeDiff));
+    }
+
+    newVelocity(wall) {
+        var normalToWall = ring.normalVectorWalls[wall];
+        var pointOfTouch;
+        var centerBall;
+        var oldDirection = this.direction.clone();
+        console.log("ntw", normalToWall)
+        //var angleNormalAndDirection = this.direction.angleTo(normalToWall.clone().multiplyScalar(-1));
+        //console.log("angle", angleNormalAndDirection)
+        this.direction = this.direction.reflect(normalToWall);
+       /* switch (wall) {
+            case 1: //right wall
+                pointOfTouch = new THREE.Vector3(ring.ringWalls[wall].position.x - 0.5, 0, ring.ringWalls[wall].position.z - 0.5*Math.tan(angleNormalAndDirection));
+                centerBall = pointOfTouch.add(oldDirection.multiplyScalar(-BALL_RADIUS));
+                break;
+            default:
+                break;
+        }
+        //console.log("ctrball", centerBall);
+        this.position.set(centerBall.x, centerBall.y, centerBall.z);*/
+        
+    }
+
+    checkCollision(_) {
+        
+    }
+
+    checkWallCollision(wall) {
+        //console.log("parede", ring.ringWalls[wall].position.z)
+        switch (wall) {
+            case 0: //bottom wall
+            case 2: //top wall
+                if(Math.abs(this.position.z + this.collisionRadius[wall] - ring.ringWalls[wall].position.z) < 0.5)  {
+                    console.log("colidiu top ou bottom")
+                    console.log(this.position.z - ring.ringWalls[wall].position.z)
+                    return wall;
+                }
+                return -1;
+                break;
+            case 1://right wall
+            case 3://left wall
+                if(Math.abs(this.position.x + this.collisionRadius[wall] - ring.ringWalls[wall].position.x) < 0.5)  {
+                    console.log("colidiu left ou right")
+                    console.log(this.position.x - ring.ringWalls[wall].position.x)
+                    return wall;
+                }
+                return -1;
+                break;
+            default:
+                break;
+        }
     }
 }
 
 class Ring extends Object3D {
     constructor(x, y, z) {
         super();
-
-        this.addWall(0, 0, WALL_WIDTH(1) / 2, 2, 0);
-        this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI/2);
-        this.addWall(0, 0, - WALL_WIDTH(1) / 2, 2, Math.PI);
-        this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 2 * WALL_RADIUS, Math.PI*3/2);
+        this.ringWalls = new Array(4);
+        this.ringWalls[0] = this.addWall(0, 0, WALL_WIDTH(1) / 2, 2, 0);
+        this.ringWalls[1] = this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI/2);
+        this.ringWalls[2] = this.addWall(0, 0, - WALL_WIDTH(1) / 2, 2, Math.PI);
+        this.ringWalls[3] = this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 2 * WALL_RADIUS, Math.PI*3/2);
+        this.normalVectorWalls = [new THREE.Vector3(0,0,-1), new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,1), new THREE.Vector3(1,0,0)]
         this.add(new THREE.AxesHelper(WALL_HEIGHT));
         this.radius = WALL_RADIUS;
         this.position.set(x, y, x);
         ring = this;
+        for (let index = 0; index < ring.ringWalls.length; index++) {
+            console.log( ring.ringWalls[index]);
+            
+        }
     }
 
     addWall(x, y, z, widthRatio, rotY) {
@@ -96,10 +156,19 @@ class Ring extends Object3D {
         wallMesh.position.set(x, y, z);
         wallMesh.rotateY(rotY);
         this.add(wallMesh);
+        return wallMesh;
     }
 
     checkCollision(ball) { //vai se a bola choca com cada parede
-        
+        var hasCollision = -1;
+        for (let index = 0; index < this.ringWalls.length; index++) {
+            hasCollision = ball.checkWallCollision(index);
+            if (hasCollision != -1) {
+                break;
+            }
+        }
+        //console.log("hasCOl", hasCollision)
+        return hasCollision;
     }
 }
 
@@ -273,12 +342,18 @@ function animate() {
     })
 
     balls.forEach(function(ball, index, balls) {
-        ring.checkCollision(ball);
+        var wallColision = ring.checkCollision(ball);
+        console.log("wallcolii", wallColision)
         for (var j = index + 1; j < balls.length; j++) {
             ball.checkCollision(balls[j]);
         }
-
+        if (wallColision != -1) {
+            console.log("WALL COLISION")
+            ball.newVelocity(wallColision);
+            ball.animate(timeDiff);
+        }
     })
+    
 
     render();
 
