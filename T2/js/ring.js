@@ -3,6 +3,7 @@ var cameras = new Array(3);
 var activeCamera = 0;
 var balls = new Array();
 var ring;
+var movingBall;
 
 var clock;
 
@@ -69,6 +70,11 @@ class Ball extends Object3D {
 
     animate(timeDiff) {
         this.position.add(this.direction.clone().multiplyScalar(this.velocity * timeDiff));
+       /* if (this.velocity) {
+        balls.forEach(function(ball) {
+            ball.rotateZ((timeDiff * this.velocity)*0.010);
+        }, this);*/
+     
     }
 
     newVelocity(wall) {
@@ -171,9 +177,18 @@ function createScene() {
     "use strict";
     
     scene = new THREE.Scene();
-    
+    movingBall = new Ball(0,0,0)
     scene.add(new THREE.AxesHelper(5));
-    scene.add(new Ball(0, 0, 0));
+    scene.add(movingBall);
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));
     scene.add(new Ring(0, 0, 0))
 }
 
@@ -222,6 +237,15 @@ function createPerspectiveCamera(index,x,y,z){
 
 }
 
+function createMovingPerspectiveCamera(index,x,y,z){
+    "use strict"
+    cameras[index] = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,1000);
+    cameras[index].position.set(0,10,-15);
+    cameras[index].lookAt(movingBall.position);
+    movingBall.add(cameras[index]);
+
+}
+
 function onResize() {
     "use strict";
     
@@ -233,7 +257,7 @@ function onResize() {
 
     resizeCameraOrtographic(0, width, height);
     resizeCameraPerspective(1);
-    //resizeCamera(2, width, height);
+    resizeCameraPerspective(2);
 }
 
 function resizeCameraOrtographic(index, width, height) {
@@ -315,7 +339,7 @@ function init() {
     createScene();
     createOrtographicCamera(0, 0, 20, 0);
     createPerspectiveCamera(1,WALL_WIDTH(1),WALL_WIDTH(1),WALL_WIDTH(1));
-   // createPerspectiveCamera(2, 0, 8.5, 30);
+    createMovingPerspectiveCamera(2,WALL_WIDTH(1),WALL_WIDTH(1),WALL_WIDTH(1));
 
     render();
 
