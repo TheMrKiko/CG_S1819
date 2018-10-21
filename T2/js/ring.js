@@ -70,11 +70,11 @@ class Ball extends Object3D {
 
     animate(timeDiff) {
         this.position.add(this.direction.clone().multiplyScalar(this.velocity * timeDiff));
-       /* if (this.velocity) {
-        balls.forEach(function(ball) {
+        if (this.velocity) {
+        balls.forEach(function(ball) {  
             ball.rotateZ((timeDiff * this.velocity)*0.010);
-        }, this);*/
-     
+        }, this);
+    }
     }
 
     newVelocity(wall) {
