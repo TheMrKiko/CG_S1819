@@ -45,7 +45,8 @@ class Ball extends Object3D {
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         this.radius = BALL_RADIUS;
         this.direction = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize();
-        this.velocity = Math.random() * 10 + 10;
+        this.velocity = 50;
+        this.oldPosition = new THREE.Vector3(x,y,z);
         this.position.set(x, y, x);
         balls.push(this);
         this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS];
@@ -78,8 +79,12 @@ class Ball extends Object3D {
         console.log("ntw", normalToWall)
         
         this.direction = this.direction.reflect(normalToWall);
-      
+        this.position.set(this.oldPosition.x, this.oldPosition.y, this.oldPosition.z);
         
+    }
+    updateOldPosition() {
+        console.log("this.position", this.position)
+        this.oldPosition = this.position;
     }
 
     checkCollision(_) {
@@ -341,6 +346,8 @@ function animate() {
             console.log("WALL COLISION")
             ball.newVelocity(wallColision);
             ball.animate(timeDiff);
+        } else {
+            ball.updateOldPosition();
         }
     })
     
