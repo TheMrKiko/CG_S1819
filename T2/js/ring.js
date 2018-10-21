@@ -48,7 +48,7 @@ class Ball extends Object3D {
         this.velocity = Math.random() * 10 + 10;
         this.position.set(x, y, x);
         balls.push(this);
-        this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS]
+        this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS];
     }
 
     addBall(x, y, z) {
@@ -76,19 +76,9 @@ class Ball extends Object3D {
         var centerBall;
         var oldDirection = this.direction.clone();
         console.log("ntw", normalToWall)
-        //var angleNormalAndDirection = this.direction.angleTo(normalToWall.clone().multiplyScalar(-1));
-        //console.log("angle", angleNormalAndDirection)
+        
         this.direction = this.direction.reflect(normalToWall);
-       /* switch (wall) {
-            case 1: //right wall
-                pointOfTouch = new THREE.Vector3(ring.ringWalls[wall].position.x - 0.5, 0, ring.ringWalls[wall].position.z - 0.5*Math.tan(angleNormalAndDirection));
-                centerBall = pointOfTouch.add(oldDirection.multiplyScalar(-BALL_RADIUS));
-                break;
-            default:
-                break;
-        }
-        //console.log("ctrball", centerBall);
-        this.position.set(centerBall.x, centerBall.y, centerBall.z);*/
+      
         
     }
 
