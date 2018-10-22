@@ -106,10 +106,11 @@ class Ball extends Object3D {
                this.collided = true;
             }
         } else if (obj instanceof Wall) {
-            if (this.position.distanceToSquared(obj.getCenterTo(this)) <= BALL_WALL_DIST_SQUARED) {
-                console.log(this, this.position)
+            if (this.getWorldPosition().distanceToSquared(obj.getCenterTo(this)) <= BALL_WALL_DIST_SQUARED) {
+                console.log(this.getWorldPosition().distanceToSquared(obj.getCenterTo(this)), this.getWorldPosition(), obj.getCenterTo(this))
                 this.direction = new THREE.Vector2(((-1) ** obj.normalToWall.x) * this.direction.x, ((-1) ** obj.normalToWall.z) * this.direction.z);
                 this.collided = true;
+                return true
             }
         }
     }
@@ -181,20 +182,14 @@ class Ring extends Object3D {
         var hasCollision = -1;
         for (let index = 0; index < this.ringWalls.length; index++) {
             hasCollision = ball.checkCollision(this.ringWalls[index]);
-            /*if (hasCollision != -1) {
+            if (hasCollision) {
                 break;
-            }*/
+            }
         }
         //console.log("hasCOl", hasCollision)
         return hasCollision;
     }
 
-    getCenterTo(obj) {
-        if (obj instanceof Ball) {
-            
-            return new THREE.Vector3()
-        }
-    }
 }
 
 class Wall extends Object3D {
@@ -223,10 +218,12 @@ class Wall extends Object3D {
         if (obj instanceof Ball) {
             console.log("ca")
             const getNeg = (coord) => coord ? 0 : 1;
+            var objPosition = obj.getWorldPosition()
+            var thisPosition = this.getWorldPosition()
             return new THREE.Vector3(
-                getNeg(this.normalToWall.x)*obj.position.x + this.normalToWall.x*this.position.x,
+                getNeg(this.normalToWall.x)*objPosition.x + this.normalToWall.x*thisPosition.x,
                 0,
-                getNeg(this.normalToWall.z)*obj.position.z + this.normalToWall.z*this.position.z)
+                getNeg(this.normalToWall.y)*objPosition.z + this.normalToWall.y*thisPosition.z)
         }
     }
 }
