@@ -11,8 +11,9 @@ const WALL_HEIGHT = 10;
 const BALL_RADIUS = WALL_HEIGHT / 2;
 const BALL_DIAMETER_SQUARED = (BALL_RADIUS * 2) ** 2;
 const WALL_RADIUS = 0.5;
-const NUM_BAllS = 3;
-const ANGULAR_VELOCITY = 0.010;
+const WALL_BALL_RADIUS_SQUARED = (WALL_RADIUS +BALL_RADIUS) ** 2 ;
+const NUM_BAllS = 8;
+const ANGULAR_VELOCITY = Math.PI / 96;
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
@@ -61,8 +62,8 @@ class Ball extends Object3D {
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         this.radius = BALL_RADIUS;
         this.direction = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize();
-        this.velocity = Math.random() * 90 + 10;
-        this.oldPosition = new THREE.Vector3(x, y, z);
+        this.velocity = Math.random() * 30 + 10;
+        this.oldPosition = new THREE.Vector3(x,y,z);
         this.position.set(x, y, x);
 
         this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS];
@@ -94,6 +95,7 @@ class Ball extends Object3D {
     
     updatePosition() {
         if (this.collided) {
+            console.log("updated", this)
             this.position.set(this.oldPosition.x, this.oldPosition.y, this.oldPosition.z);
         } else {
             this.oldPosition = this.position.clone();
@@ -104,13 +106,17 @@ class Ball extends Object3D {
     checkCollision(obj) {
         if (obj instanceof Ball) {
             if (this.position.distanceToSquared(obj.getCenterTo(this)) <= BALL_DIAMETER_SQUARED) {
-                [this.direction, obj.direction] = [obj.direction, this.direction];
-                [this.velocity, obj.velocity] = [obj.velocity, this.velocity];
-                this.collided = true;
                 return true;
             }
             return false
         }
+    }
+
+    resolveCollision(obj) {
+        [this.direction, obj.direction] = [obj.direction, this.direction];
+        [this.velocity, obj.velocity] = [obj.velocity, this.velocity];
+        this.collided = true;
+        obj.collided = true;
     }
 
     checkCollisionWithAll() {
@@ -119,7 +125,6 @@ class Ball extends Object3D {
                 return true;
             }
         }
-        return false;
     }
     
     getCenterTo(obj) {
@@ -129,31 +134,15 @@ class Ball extends Object3D {
     }
     
     checkWallCollision(wall) {
-        switch (wall) {
-            case 0: //bottom wall
-            case 2: //top wall
-            if(Math.abs(this.position.z + this.collisionRadius[wall] - ring.ringWalls[wall].position.z) <= 0.5)  {
-                console.log("colidiu top ou bottom")
-                console.log(this.position.z - ring.ringWalls[wall].position.z)
-                var normalToWall = ring.normalVectorWalls[wall];
-                this.direction = this.direction.reflect(normalToWall);
-                this.collided = true;
-                return true;
-            }
-            return false;
-            case 1://right wall
-            case 3://left wall
-            if(Math.abs(this.position.x + this.collisionRadius[wall] - ring.ringWalls[wall].position.x) <= 0.5)  {
-                console.log("colidiu left ou right")
-                console.log(this.position.x - ring.ringWalls[wall].position.x)
-                var normalToWall = ring.normalVectorWalls[wall];
-                this.direction = this.direction.reflect(normalToWall);
-                this.collided = true;
-                return true;
-            }
-            return false;
-            default:
-            break;
+        var u2 = new THREE.Vector3()
+        var union = this.getWorldPosition(u2).clone().sub(ring.ringWalls[wall].getWorldPosition(u2));
+        var normalToWall = ring.normalVectorWalls[wall];
+        var distance = union.projectOnVector(normalToWall);
+        
+        if (distance.dot(normalToWall) < 0 || distance.lengthSq() <= WALL_BALL_RADIUS_SQUARED) { //inside wall or already out of wal
+            this.direction.reflect(normalToWall);
+            this.collided = true;
+            return true;
         }
     }
 }
@@ -200,7 +189,7 @@ class Ring extends Object3D {
     checkCollision(ball) { //vai se a bola choca com cada parede
         for (let index = 0; index < this.ringWalls.length; index++) {
             if (ball.checkWallCollision(index)) {
-                break;
+                return true;
             }
         }
     }
@@ -212,6 +201,7 @@ function createScene() {
     var numBalls = NUM_BAllS - 1;
 
     scene = new THREE.Scene();
+    scene.add(new Ring(0, 0, 0))
     scene.add(new THREE.AxesHelper(5));
     movingBall = new Ball(0,0,0);
 
@@ -219,7 +209,7 @@ function createScene() {
     scene.add(movingBall);
 
     while (numBalls) {
-        var ball = new Ball(Math.random() * WALL_WIDTH(1) - WALL_WIDTH(1) / 2, 0, Math.random() * WALL_WIDTH(1) - WALL_WIDTH(1) / 2)
+        var ball = new Ball(Math.random() * (WALL_WIDTH(2) - 2 * BALL_RADIUS) - (WALL_WIDTH(2) - 2 * BALL_RADIUS) / 2, 0, Math.random() * (WALL_WIDTH(1) - 2 * BALL_RADIUS) - (WALL_WIDTH(1) - 2 * BALL_RADIUS) / 2)
         if (!ball.checkCollisionWithAll()) {
             numBalls--;
             scene.add(ball);
@@ -229,7 +219,6 @@ function createScene() {
             console.log("apagou")
         }
     }
-    scene.add(new Ring(0, 0, 0))
 }
 
 function createOrtographicCamera(index, x, y, z) {
@@ -394,6 +383,12 @@ function init() {
     window.addEventListener("resize", onResize);
 
     clock = new THREE.Clock();
+    
+    var interval = setInterval(function() {
+        balls.forEach(function(ball) {
+            ball.velocity *= 1.2;
+        })
+    }, 10 * 1000)
 }
 
 function animate() {
@@ -406,13 +401,16 @@ function animate() {
             node.animate(timeDiff);
         }
     })
+
     balls.forEach(function(ball, index, balls) {
         ring.checkCollision(ball);
         for (var j = index + 1; j < balls.length; j++) {
-            ball.checkCollision(balls[j]);
+            if(ball.checkCollision(balls[j])) {
+                ball.resolveCollision(balls[j]);
+            }
         }
     })
-    
+
     balls.forEach(function(ball) {
         ball.updatePosition();
     })
