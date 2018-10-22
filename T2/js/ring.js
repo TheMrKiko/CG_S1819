@@ -1,35 +1,37 @@
-var scene, renderer;
+var scene, renderer, clock;
 var cameras = new Array(3);
 var activeCamera = 0;
 var balls = new Array();
 var ring;
 var movingBall;
 
-var clock;
-
 const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
 const WALL_HEIGHT = 10;
 const BALL_RADIUS = WALL_HEIGHT / 2;
+const BALL_DIAMETER_SQUARED = (BALL_RADIUS * 2) ** 2;
 const WALL_RADIUS = 0.5;
-const WALL_WIDTH = (ratio) => (WALL_HEIGHT * 10 * ratio) / Math.sqrt(5)
+
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
+
+const WALL_WIDTH = (ratio) => (WALL_HEIGHT * 10 * ratio) / Math.sqrt(5);
 
 class Object3D extends THREE.Object3D {
 
     constructor() {
         super();
         this.direction;
-        this.velocity = 1
-        this.radius = 0;
+        this.velocity = 0;
+        this.radius;
+        this.collided = false;
     }
 
     animate(_) {
     }
 
-    getDistance(_) {
+    getCenterTo(_) {
 
     }
 
@@ -46,10 +48,12 @@ class Ball extends Object3D {
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         this.radius = BALL_RADIUS;
         this.direction = new THREE.Vector3(Math.random() * 2 - 1, 0, Math.random() * 2 - 1).normalize();
-        this.velocity = 50;
-        this.oldPosition = new THREE.Vector3(x,y,z);
+        this.velocity = Math.random() * 30 + 10;
+        this.oldPosition = new THREE.Vector3(x, y, z);
         this.position.set(x, y, x);
+
         balls.push(this);
+
         this.collisionRadius = [BALL_RADIUS, BALL_RADIUS , -BALL_RADIUS, -BALL_RADIUS];
     }
 
@@ -57,7 +61,7 @@ class Ball extends Object3D {
         "use strict";
 
         var ballMaterial = new THREE.MeshBasicMaterial({
-            color: eval('0x'+Math.floor(Math.random()*16777215).toString(16)),
+            color: eval('0x'+Math.floor(Math.random() * 16777215).toString(16)),
             wireframe: true
         });
         var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 10, 10);
@@ -69,12 +73,14 @@ class Ball extends Object3D {
     }
 
     animate(timeDiff) {
+
         this.position.add(this.direction.clone().multiplyScalar(this.velocity * timeDiff));
+
         if (this.velocity) {
-        balls.forEach(function(ball) {  
-            ball.rotateZ((timeDiff * this.velocity)*0.010);
-        }, this);
-    }
+            balls.forEach(function(ball) {  
+                ball.rotateZ((timeDiff * this.velocity)*0.010);
+            }, this);
+        }
     }
 
     newVelocity(wall) {
@@ -93,8 +99,20 @@ class Ball extends Object3D {
         this.oldPosition = this.position;
     }
 
-    checkCollision(_) {
-        
+    checkCollision(obj) {
+        if (obj instanceof Ball) {
+            if (this.position.distanceToSquared(obj.getCenterTo(this)) <= BALL_DIAMETER_SQUARED) {
+               [this.direction, obj.direction] = [obj.direction, this.direction];
+               [this.velocity, obj.velocity] = [obj.velocity, this.velocity];
+               this.collided = true;
+            }
+        }
+    }
+
+    getCenterTo(obj) {
+        if (obj instanceof Ball) {
+            return this.position;
+        }
     }
 
     checkWallCollision(wall) {
@@ -127,13 +145,16 @@ class Ball extends Object3D {
 class Ring extends Object3D {
     constructor(x, y, z) {
         super();
+        
         this.ringWalls = new Array(4);
         this.ringWalls[0] = this.addWall(0, 0, WALL_WIDTH(1) / 2, 2, 0);
-        this.ringWalls[1] = this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI/2);
+        this.ringWalls[1] = this.addWall(WALL_WIDTH(2) / 2, 0, 0, 1, Math.PI / 2);
         this.ringWalls[2] = this.addWall(0, 0, - WALL_WIDTH(1) / 2, 2, Math.PI);
-        this.ringWalls[3] = this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 2 * WALL_RADIUS, Math.PI*3/2);
-        this.normalVectorWalls = [new THREE.Vector3(0,0,-1), new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,1), new THREE.Vector3(1,0,0)]
+        this.ringWalls[3] = this.addWall(- WALL_WIDTH(2) / 2, 0, 0, 2 * WALL_RADIUS, Math.PI * 3 / 2);
         this.add(new THREE.AxesHelper(WALL_HEIGHT));
+
+        this.normalVectorWalls = [new THREE.Vector3(0,0,-1), new THREE.Vector3(-1,0,0), new THREE.Vector3(0,0,1), new THREE.Vector3(1,0,0)]
+
         this.radius = WALL_RADIUS;
         this.position.set(x, y, x);
         ring = this;
@@ -177,12 +198,12 @@ function createScene() {
     "use strict";
     
     scene = new THREE.Scene();
-    movingBall = new Ball(0,0,0)
     scene.add(new THREE.AxesHelper(5));
+    movingBall = new Ball(0,0,0)
     scene.add(movingBall);
-    scene.add(new Ball(0,0,0));
-    scene.add(new Ball(0,0,0));
-    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(1,0,0));
+    scene.add(new Ball(2,0,0));
+    scene.add(new Ball(3,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
@@ -195,9 +216,9 @@ function createScene() {
 function createOrtographicCamera(index, x, y, z) {
     "use strict";
 
-    var sizes = calcCameraSize()
-    var width = sizes[0]
-    var height = sizes[1]
+    var sizes = calcCameraSize();
+    var width = sizes[0];
+    var height = sizes[1];
 
     cameras[index] = new THREE.OrthographicCamera(
         - width / 2,
@@ -213,7 +234,8 @@ function createOrtographicCamera(index, x, y, z) {
 }
 
 function calcCameraSize() {
-    
+    "use strict";
+
     var scale = window.innerWidth / window.innerHeight;
 
     if (scale > ASPECT_RATIO) { // largura maior
@@ -229,18 +251,20 @@ function calcCameraSize() {
     return [width, height]
 }
 
-function createPerspectiveCamera(index,x,y,z){
-    "use strict"
-    cameras[index] = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,1000);
+function createPerspectiveCamera(index, x, y, z){
+    "use strict";
+
+    cameras[index] = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
     cameras[index].position.set(x,y,z);
-    cameras[index].lookAt(0,0,0);
+    cameras[index].lookAt(0, 0, 0);
 
 }
 
-function createMovingPerspectiveCamera(index,x,y,z){
-    "use strict"
-    cameras[index] = new THREE.PerspectiveCamera(90,window.innerWidth/window.innerHeight,1,1000);
-    cameras[index].position.set(0,10,-15);
+function createMovingPerspectiveCamera(index, x, y, z){
+    "use strict";
+
+    cameras[index] = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+    cameras[index].position.set(0, 10, -15);
     cameras[index].lookAt(movingBall.position);
     movingBall.add(cameras[index]);
 
@@ -251,9 +275,9 @@ function onResize() {
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    var sizes = calcCameraSize()
-    var width = sizes[0]
-    var height = sizes[1]
+    var sizes = calcCameraSize();
+    var width = sizes[0];
+    var height = sizes[1];
 
     resizeCameraOrtographic(0, width, height);
     resizeCameraPerspective(1);
@@ -262,6 +286,7 @@ function onResize() {
 
 function resizeCameraOrtographic(index, width, height) {
     "use strict";
+
 	cameras[index].left = - width / 2;
 	cameras[index].right = width / 2;
 	cameras[index].top = height / 2;
@@ -269,8 +294,8 @@ function resizeCameraOrtographic(index, width, height) {
     cameras[index].updateProjectionMatrix();
 
 }function resizeCameraPerspective(index) {
-    'use strict';
-
+    "use strict";
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
     
     var sizes = calcCameraSize()
@@ -292,6 +317,7 @@ function switchCamera(index) {
 
 function onKeyDown(e) {
     "use strict";
+
     switch (e.keyCode) {
         case 49: //1
         switchCamera(0);
@@ -338,8 +364,8 @@ function init() {
 
     createScene();
     createOrtographicCamera(0, 0, 20, 0);
-    createPerspectiveCamera(1,WALL_WIDTH(1),WALL_WIDTH(1),WALL_WIDTH(1));
-    createMovingPerspectiveCamera(2,WALL_WIDTH(1),WALL_WIDTH(1),WALL_WIDTH(1));
+    createPerspectiveCamera(1, WALL_WIDTH(1), WALL_WIDTH(1), WALL_WIDTH(1));
+    createMovingPerspectiveCamera(2, WALL_WIDTH(1), WALL_WIDTH(1), WALL_WIDTH(1));
 
     render();
 
