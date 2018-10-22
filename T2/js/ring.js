@@ -67,7 +67,7 @@ class Ball extends Object3D {
         var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 10, 10);
 
         var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
-
+        ballMesh.name = "BallMesh";
         ballMesh.position.set(x, y, z);
         this.add(ballMesh);
     }
@@ -76,11 +76,9 @@ class Ball extends Object3D {
 
         this.position.add(this.direction.clone().multiplyScalar(this.velocity * timeDiff));
 
-        if (this.velocity) {
-            balls.forEach(function(ball) {  
-                ball.rotateZ((timeDiff * this.velocity)*0.010);
-            }, this);
-        }
+        this.getObjectByName("BallMesh").rotateZ((timeDiff * this.velocity)*0.010);
+           
+      
     }
 
     newVelocity(wall) {
@@ -202,14 +200,14 @@ function createScene() {
     movingBall = new Ball(0,0,0)
     scene.add(movingBall);
     scene.add(new Ball(1,0,0));
-    scene.add(new Ball(2,0,0));
+   /* scene.add(new Ball(2,0,0));
     scene.add(new Ball(3,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
     scene.add(new Ball(0,0,0));
-    scene.add(new Ball(0,0,0));
+    scene.add(new Ball(0,0,0));*/
     scene.add(new Ring(0, 0, 0))
 }
 
