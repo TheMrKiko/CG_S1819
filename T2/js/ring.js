@@ -86,7 +86,7 @@ class Ball extends Object3D {
         
         this.setRotationFromAxisAngle(Y_AXIS, calcAngleToRotate(this.direction) + Math.PI / 2);
 
-        this.getObjectByName("BallMesh").rotateX(timeDiff * this.velocity * ANGULAR_VELOCITY);
+        this.getObjectByName("BallMesh").rotateX(timeDiff * this.velocity / BALL_RADIUS);
     }
     
     updatePosition() {
@@ -376,7 +376,7 @@ function init() {
         balls.forEach(function(ball) {
             ball.velocity *= 1.2;
         })
-    }, 20 * 1000)
+    }, 30 * 1000)
 }
 
 function animate() {
