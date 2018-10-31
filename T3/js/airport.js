@@ -31,7 +31,7 @@ class Lamp extends Object3D {
         this.addReflector(0, 13, 0);
         this.addHolder(0, 14.5, 0);
         this.addLamp(0, 15 ,0);
-        //this.add(new THREE.AxisHelper(3));
+        //this.add(new THREE.AxesHelper(3));
 
         this.position.set(x, y, z);
     }
@@ -119,7 +119,7 @@ function createScene() {
     
     scene = new THREE.Scene();
     
-    scene.add(new THREE.AxisHelper(5));
+    scene.add(new THREE.AxesHelper(5));
     scene.add(new Lamp(15, 0, 0))
 }
 
@@ -212,7 +212,7 @@ function onKeyDown(e) {
         case 69: //E
         case 101: //e
         scene.traverse(function(node) {
-            if (node instanceof THREE.AxisHelper) {
+            if (node instanceof THREE.AxesHelper) {
                 node.visible = !node.visible;
             }
         });
