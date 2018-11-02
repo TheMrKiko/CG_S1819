@@ -54,7 +54,7 @@ class Floor extends Object3D {
 class Plane extends Object3D{
     constructor(x,y,z){
         super();
-
+  
         this.addBody(0,0,0);
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
