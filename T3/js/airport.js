@@ -3,13 +3,15 @@ var cameras = new Array(3);
 var activeCamera = 0;
 
 const ANGULAR_VELOCITY = Math.PI/2;
-const ASPECT_RATIO = 16/10;
-const PLANE_HEIGHT = 25;
+const ASPECT_RATIO = 16/9;
+const PLANE_HEIGHT = [50, 25, 25];
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
-const DISTANCE_LAMPS = 7;
+const DISTANCE_LAMPS = 20;
+const LAMP_BASE_RADIUS = 2.5;
+const LAMP_HEIGHT = 14;
 
 class Object3D extends THREE.Object3D {
 
@@ -24,10 +26,10 @@ class Object3D extends THREE.Object3D {
     }
 }
 class Floor extends Object3D {
-    constructor(x,y,z) {
+    constructor(x, y, z) {
         super();
 
-        this.addFloor(0,0,0);
+        this.addFloor(0, 0, 0);
 
         this.position.set(x,y,z);
 
@@ -40,11 +42,11 @@ class Floor extends Object3D {
             color: 0xffffff,
             wireframe: true
         });
-        var floorGeometry = new THREE.BoxGeometry(3*DISTANCE_LAMPS, 0.5, 3*DISTANCE_LAMPS);
+        var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 10, 1, 10);
 
         var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
 
-        floorMesh.position.set(x, y-0.25, z);
+        floorMesh.position.set(x, y - 0.25, z);
         this.add(floorMesh);
     }
 }
@@ -69,7 +71,7 @@ class Lamp extends Object3D {
             color: 0x663300,
             wireframe: true
         });
-        var baseGeometry = new THREE.CylinderGeometry(2.5, 2.5, 0.5, 20);
+        var baseGeometry = new THREE.CylinderGeometry(LAMP_BASE_RADIUS, LAMP_BASE_RADIUS, 0.5, 20);
 
         var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
 
@@ -84,7 +86,7 @@ class Lamp extends Object3D {
             color: 0x663300,
             wireframe: true
         });
-        var tubeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 14, 15);
+        var tubeGeometry = new THREE.CylinderGeometry(0.5, 0.5, LAMP_HEIGHT, 15);
 
         var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
 
@@ -150,13 +152,13 @@ function createScene() {
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
     scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
-    scene.add(new Floor(0,0,0));
+    scene.add(new Floor(0, 0, 0));
 }
 
 function createCamera(index, x, y, z) {
     "use strict";
 
-    var sizes = calcCameraSize()
+    var sizes = calcCameraSize(index)
     var width = sizes[0]
     var height = sizes[1]
 
@@ -170,20 +172,20 @@ function createCamera(index, x, y, z) {
     );
     cameras[index].position.set(x, y, z)
     
-    cameras[index].lookAt(new THREE.Vector3(0, 8.5, 0));
+    cameras[index].lookAt(new THREE.Vector3(0, LAMP_HEIGHT / 2, 0));
 }
 
-function calcCameraSize() {
+function calcCameraSize(index) {
     
     var scale = window.innerWidth / window.innerHeight;
 
     if (scale > ASPECT_RATIO) { // largura maior
 
-        var width = scale * PLANE_HEIGHT;
-        var height = PLANE_HEIGHT;
+        var width = scale * PLANE_HEIGHT[index];
+        var height = PLANE_HEIGHT[index];
     } else {
 
-        var width = ASPECT_RATIO * PLANE_HEIGHT;
+        var width = ASPECT_RATIO * PLANE_HEIGHT[index];
         var height = width / scale;
     }
 
@@ -195,13 +197,13 @@ function onResize() {
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    var sizes = calcCameraSize()
-    var width = sizes[0]
-    var height = sizes[1]
+    for (var i in cameras) {
+        var sizes = calcCameraSize(i)
+        var width = sizes[0]
+        var height = sizes[1]
 
-    resizeCamera(0, width, height);
-    resizeCamera(1, width, height);
-    resizeCamera(2, width, height);
+        resizeCamera(i, width, height);
+    }
 }
 
 function resizeCamera(index, width, height) {
@@ -319,9 +321,9 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera(0, 0, 20, 0);
-    createCamera(1, 30, 8.5, 0);
-    createCamera(2, 0, 8.5, 30);
+    createCamera(0, 0, 30, 0);
+    createCamera(1, 30, LAMP_HEIGHT / 2, 0);
+    createCamera(2, 0, LAMP_HEIGHT / 2, 30);
 
     render();
 
