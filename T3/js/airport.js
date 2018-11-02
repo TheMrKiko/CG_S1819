@@ -50,6 +50,48 @@ class Floor extends Object3D {
         this.add(floorMesh);
     }
 }
+
+class Plane extends Object3D{
+    constructor(x,y,z){
+        super();
+
+        this.addBody(0,0,0);
+        this.add(new THREE.AxesHelper(3));
+        this.position.set(x,y,z);
+    }
+
+    addBody(x,y,z){
+        "use strict";
+
+        var bodyGeometry = new THREE.Geometry();
+
+        bodyGeometry.vertices.push(
+            new THREE.Vector3(-1, 1, 0 ),
+            new THREE.Vector3(-1, -1, 0 ),
+            new THREE.Vector3(1, -1, 0 ),
+            new THREE.Vector3(0, -1, 5),
+            new THREE.Vector3(0, -1, -5)
+            //new THREE.Vector3( -2, 2, 0 )
+        );
+
+        bodyGeometry.faces.push( new THREE.Face3(0, 1, 2) );
+        bodyGeometry.faces.push( new THREE.Face3(3, 1, 2) );
+        bodyGeometry.faces.push( new THREE.Face3(4, 1, 2) );
+
+
+       // geometry.computeBoundingSphere();
+        var baseMaterial = new THREE.MeshBasicMaterial({
+        color: 0x663300,
+        wireframe: true
+    });
+        
+        var baseMesh = new THREE.Mesh(bodyGeometry, baseMaterial);
+
+        baseMesh.position.set(x, y, z);
+        this.add(baseMesh);
+    }
+}
+
 class Lamp extends Object3D {
     constructor(x, y, z) {
         super();
@@ -153,6 +195,7 @@ function createScene() {
     scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Floor(0, 0, 0));
+    scene.add(new Plane(0,2,0));
 }
 
 function createCamera(index, x, y, z) {
