@@ -9,6 +9,8 @@ const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
+const DISTANCE_LAMPS = 7;
+
 class Object3D extends THREE.Object3D {
 
     constructor() {
@@ -21,14 +23,38 @@ class Object3D extends THREE.Object3D {
     animate(_) {
     }
 }
+class Floor extends Object3D {
+    constructor(x,y,z) {
+        super();
 
+        this.addFloor(0,0,0);
+
+        this.position.set(x,y,z);
+
+    }
+
+    addFloor(x,y,z) {
+        "use strict";
+    
+        var floorMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+        });
+        var floorGeometry = new THREE.BoxGeometry(3*DISTANCE_LAMPS, 0.5, 3*DISTANCE_LAMPS);
+
+        var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+
+        floorMesh.position.set(x, y-0.25, z);
+        this.add(floorMesh);
+    }
+}
 class Lamp extends Object3D {
     constructor(x, y, z) {
         super();
 
         this.addBase(0, 0, 0);
         this.addTube(0, 0.5, 0)
-        this.addReflector(0, 13, 0);
+        //this.addReflector(0, 13, 0);
         this.addHolder(0, 14.5, 0);
         this.addLamp(0, 15 ,0);
         //this.add(new THREE.AxesHelper(3));
@@ -120,7 +146,11 @@ function createScene() {
     scene = new THREE.Scene();
     
     scene.add(new THREE.AxesHelper(5));
-    scene.add(new Lamp(15, 0, 0))
+    scene.add(new Lamp(DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
+    scene.add(new Lamp(-DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
+    scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
+    scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
+    scene.add(new Floor(0,0,0));
 }
 
 function createCamera(index, x, y, z) {
