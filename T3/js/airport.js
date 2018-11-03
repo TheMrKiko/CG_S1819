@@ -70,8 +70,8 @@ class Plane extends Object3D{
             new THREE.Vector3(-1, -1, 0 ),
             new THREE.Vector3(1, -1, 0 ),
             new THREE.Vector3(0, -1, 5),
-            new THREE.Vector3(0, -1, -5)
-            //new THREE.Vector3( -2, 2, 0 )
+            new THREE.Vector3(0, -1, -5),
+            new THREE.Vector3( -2, 2, 0 )
         );
 
         bodyGeometry.faces.push( new THREE.Face3(0, 1, 2) );
