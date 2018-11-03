@@ -68,6 +68,8 @@ class Plane extends Object3D{
   
        // this.addBody(0,0,0);
         this.addWing(0,0,0);
+        this.addStabilizer(0,0,-20);
+        this.addWingStabilizer(0,0,-20);
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
     }
@@ -140,11 +142,9 @@ class Plane extends Object3D{
         wingGeometry.faces.push( new THREE.Face3(B, UP_A, UP_C));
         wingGeometry.faces.push( new THREE.Face3(B, UP_C, C));
 
-        console.log(wingGeometry.faces[0])
-        console.log(wingGeometry.faces[0]["b"])
-        console.log(wingGeometry.faces.length)
         //WING2
-        for (var i = 0; i < wingGeometry.faces.length; i++) {
+        var len = wingGeometry.faces.length;
+        for (var i = 0; i < len; i++) {
             console.log(i);
             var v1 = wingGeometry.faces[i]["a"];
             var v2 = wingGeometry.faces[i]["b"];
@@ -152,22 +152,121 @@ class Plane extends Object3D{
             wingGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
         }
 
-       
-
-        
-
-
        // geometry.computeBoundingSphere();
         var wingMaterial = new THREE.MeshBasicMaterial({
         color: 0xff0000,
         wireframe: true
     });
-        
+    
         var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
 
         wingMesh.position.set(x, y, z);
         this.add(wingMesh);
 
+    }
+
+    addStabilizer(x, y, z) {
+        "use strict";
+
+        var stabilizerGeometry = new THREE.Geometry();
+
+        var stabilizerMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0000ff,
+            wireframe: true
+        });
+        stabilizerGeometry.vertices.push(
+            // vertical stabilizer
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 3, 0),
+            new THREE.Vector3(0, 0, 3),
+            new THREE.Vector3(-0.5, 0, 0),
+            new THREE.Vector3(-0.5, 3, 0),
+            new THREE.Vector3(-0.5, 0, 3),
+
+        );
+
+        //stabilizerGeometry.vertices.push(midpointGeo(stabilizerGeometry, 0, 1, 2, 1)) //mete um vertice entre o 0 e o 1
+
+        stabilizerGeometry.faces.push(new THREE.Face3(0, 1, 2));
+        stabilizerGeometry.faces.push(new THREE.Face3(3, 5, 4));
+        stabilizerGeometry.faces.push(new THREE.Face3(1, 0, 3));
+        stabilizerGeometry.faces.push(new THREE.Face3(4, 1, 3));
+        stabilizerGeometry.faces.push(new THREE.Face3(1, 5, 2));
+        stabilizerGeometry.faces.push(new THREE.Face3(4, 5, 1));
+
+        var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
+        stabilizerMesh.position.set(x, y, z);
+        this.add(stabilizerMesh);
+        }
+
+
+    addWingStabilizer(x, y, z) {
+        "use strict";
+
+        var stabilizerGeometry = new THREE.Geometry();
+
+        var stabilizerMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0000ff,
+            wireframe: true
+        });
+    //horizontal
+    // horizontal stabilizers
+        stabilizerGeometry.vertices.push(
+            new THREE.Vector3(-2.5,0,0), // A - 0
+            new THREE.Vector3(-2.5,0,6), // B - 1
+            new THREE.Vector3(-14.5,0,0), // C - 2
+            new THREE.Vector3(-14.5,0,-4), // D - 3
+            new THREE.Vector3(-4.5,0,0), // E - 4
+            new THREE.Vector3(-14.5,1,0), // UP C - 5 
+            new THREE.Vector3(-4.5,1,0), //  UP E - 6
+            new THREE.Vector3(-2.5,1,0), //UP A - 7
+
+            //WING 2
+            new THREE.Vector3(2.5,0,0), // A - 8
+            new THREE.Vector3(2.5,0,6), // B - 9
+            new THREE.Vector3(14.5,0,0), // C - 10
+            new THREE.Vector3(14.5,0,-4), // D - 11
+            new THREE.Vector3(4.5,0,0), // E - 12
+            new THREE.Vector3(14.5,1,0), // UP C - 13 
+            new THREE.Vector3(4.5,1,0), //  UP E - 14
+            new THREE.Vector3(2.5,1,0), //UP A - 15
+        )
+
+        stabilizerGeometry.faces.push( new THREE.Face3(0, 2, 1));
+        stabilizerGeometry.faces.push( new THREE.Face3(2, 4, 3));
+        stabilizerGeometry.faces.push( new THREE.Face3(2, 5, 6));
+        stabilizerGeometry.faces.push( new THREE.Face3(2, 4, 6));
+        stabilizerGeometry.faces.push( new THREE.Face3(2, 5, 3));
+        stabilizerGeometry.faces.push( new THREE.Face3(3, 5, 6));
+        stabilizerGeometry.faces.push( new THREE.Face3(3, 6, 4));
+        stabilizerGeometry.faces.push( new THREE.Face3(A, E, UP_A));
+        stabilizerGeometry.faces.push( new THREE.Face3(E, UP_E, UP_A));
+        stabilizerGeometry.faces.push( new THREE.Face3(B, A, UP_A));
+        stabilizerGeometry.faces.push( new THREE.Face3(B, UP_A, UP_C));
+        stabilizerGeometry.faces.push( new THREE.Face3(B, UP_C, C));
+
+        //WING2
+        var len = stabilizerGeometry.faces.length;
+        for (var i = 0; i < len; i++) {
+            console.log(i);
+            var v1 = stabilizerGeometry.faces[i]["a"];
+            var v2 = stabilizerGeometry.faces[i]["b"];
+            var v3 = stabilizerGeometry.faces[i]["c"];
+            stabilizerGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
+        }
+
+        var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
+        var m = new THREE.Matrix4();
+        m.set(1/3, 0, 0, 0,
+                0,1/3,0,0,
+                0,0,1/3,0,
+                0,0,0,1)
+        stabilizerMesh.applyMatrix(m);
+        stabilizerMesh.position.set(x, y, z);
+
+
+        
+        this.add(stabilizerMesh);
     }
 }
 
