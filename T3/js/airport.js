@@ -1,10 +1,9 @@
 var scene, renderer, clock;
-var cameras = new Array(3);
-var activeCamera = 0;
+var camera;
 
 const ANGULAR_VELOCITY = Math.PI/2;
 const ASPECT_RATIO = 16/9;
-const PLANE_HEIGHT = [50, 25, 25];
+const PLANE_HEIGHT = 55;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
@@ -15,6 +14,15 @@ const LAMP_HEIGHT = 14;
 
 const midpoint = (A, B, n, nm1) => new THREE.Vector3((A.x + B.x) * nm1 / n, (A.y + B.y) * nm1 / n, (A.z + B.z) * nm1 / n)
 const midpointGeo = (geo, a, b, n, nm1) => midpoint(geo.vertices[a], geo.vertices[b], n, nm1)
+
+const A = 0;
+const B = 1;
+const C = 2;
+const D = 3;
+const E = 4;
+const UP_C = 5;
+const UP_E = 6;
+const UP_A = 7;
 
 class Object3D extends THREE.Object3D {
 
@@ -58,7 +66,8 @@ class Plane extends Object3D{
     constructor(x, y, z) {
         super();
   
-        this.addBody(0,0,0);
+       // this.addBody(0,0,0);
+        this.addWing(0,0,0);
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
     }
@@ -90,6 +99,75 @@ class Plane extends Object3D{
         var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
         bodyMesh.position.set(x + 5, y, z);
         this.add(bodyMesh);
+    }
+
+    addWing(x,y,z){
+        "use strict";
+
+        var wingGeometry = new THREE.Geometry();
+
+        wingGeometry.vertices.push(
+            new THREE.Vector3(-2.5,0,0), // A - 0
+            new THREE.Vector3(-2.5,0,6), // B - 1
+            new THREE.Vector3(-14.5,0,0), // C - 2
+            new THREE.Vector3(-14.5,0,-4), // D - 3
+            new THREE.Vector3(-4.5,0,0), // E - 4
+            new THREE.Vector3(-14.5,1,0), // UP C - 5 
+            new THREE.Vector3(-4.5,1,0), //  UP E - 6
+            new THREE.Vector3(-2.5,1,0), //UP A - 7
+          
+            //WING 2
+            new THREE.Vector3(2.5,0,0), // A - 8
+            new THREE.Vector3(2.5,0,6), // B - 9
+            new THREE.Vector3(14.5,0,0), // C - 10
+            new THREE.Vector3(14.5,0,-4), // D - 11
+            new THREE.Vector3(4.5,0,0), // E - 12
+            new THREE.Vector3(14.5,1,0), // UP C - 13 
+            new THREE.Vector3(4.5,1,0), //  UP E - 14
+            new THREE.Vector3(2.5,1,0), //UP A - 15
+        );
+
+        wingGeometry.faces.push( new THREE.Face3(0, 2, 1));
+        wingGeometry.faces.push( new THREE.Face3(2, 4, 3));
+        wingGeometry.faces.push( new THREE.Face3(2, 5, 6));
+        wingGeometry.faces.push( new THREE.Face3(2, 4, 6));
+        wingGeometry.faces.push( new THREE.Face3(2, 5, 3));
+        wingGeometry.faces.push( new THREE.Face3(3, 5, 6));
+        wingGeometry.faces.push( new THREE.Face3(3, 6, 4));
+        wingGeometry.faces.push( new THREE.Face3(A, E, UP_A));
+        wingGeometry.faces.push( new THREE.Face3(E, UP_E, UP_A));
+        wingGeometry.faces.push( new THREE.Face3(B, A, UP_A));
+        wingGeometry.faces.push( new THREE.Face3(B, UP_A, UP_C));
+        wingGeometry.faces.push( new THREE.Face3(B, UP_C, C));
+
+        console.log(wingGeometry.faces[0])
+        console.log(wingGeometry.faces[0]["b"])
+        console.log(wingGeometry.faces.length)
+        //WING2
+        for (var i = 0; i < wingGeometry.faces.length; i++) {
+            console.log(i);
+            var v1 = wingGeometry.faces[i]["a"];
+            var v2 = wingGeometry.faces[i]["b"];
+            var v3 = wingGeometry.faces[i]["c"];
+            wingGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
+        }
+
+       
+
+        
+
+
+       // geometry.computeBoundingSphere();
+        var wingMaterial = new THREE.MeshBasicMaterial({
+        color: 0xff0000,
+        wireframe: true
+    });
+        
+        var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
+
+        wingMesh.position.set(x, y, z);
+        this.add(wingMesh);
+
     }
 }
 
@@ -195,88 +273,64 @@ function createScene() {
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
     scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
-    scene.add(new Floor(0, 0, 0));
-    scene.add(new Plane(0, 2, 0));
+   // scene.add(new Floor(0, 0, 0));
+    scene.add(new Plane(0,2,0));
 }
 
-function createCamera(index, x, y, z) {
+function calcCameraSize() {
     "use strict";
 
-    var sizes = calcCameraSize(index)
-    var width = sizes[0]
-    var height = sizes[1]
-
-    cameras[index] = new THREE.OrthographicCamera(
-        - width / 2,
-        width / 2,
-        height / 2,
-        - height / 2,
-        -1000,
-        1000
-    );
-    cameras[index].position.set(x, y, z)
-    
-    cameras[index].lookAt(new THREE.Vector3(0, LAMP_HEIGHT / 2, 0));
-}
-
-function calcCameraSize(index) {
-    
     var scale = window.innerWidth / window.innerHeight;
 
     if (scale > ASPECT_RATIO) { // largura maior
 
-        var width = scale * PLANE_HEIGHT[index];
-        var height = PLANE_HEIGHT[index];
+        var width = scale * PLANE_HEIGHT;
+        var height = PLANE_HEIGHT;
     } else {
 
-        var width = ASPECT_RATIO * PLANE_HEIGHT[index];
+        var width = ASPECT_RATIO * PLANE_HEIGHT;
         var height = width / scale;
     }
 
     return [width, height]
 }
 
-function onResize() {
+function createPerspectiveCamera( x, y, z){
+    "use strict";
+
+    camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 1, 1000);
+    camera.position.set(x,y,z);
+    camera.lookAt(0, 0, 0);
+
+}
+
+function resizeCameraPerspective() {
     "use strict";
     
     renderer.setSize(window.innerWidth, window.innerHeight);
     
-    for (var i in cameras) {
-        var sizes = calcCameraSize(i)
-        var width = sizes[0]
-        var height = sizes[1]
+    var sizes = calcCameraSize()
+    var width = sizes[0]
+    var height = sizes[1]
 
-        resizeCamera(i, width, height);
+    if (window.innerHeight > 0 && window.innerWidth > 0) {
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
     }
 }
 
-function resizeCamera(index, width, height) {
-    "use strict";
-	cameras[index].left = - width / 2;
-	cameras[index].right = width / 2;
-	cameras[index].top = height / 2;
-	cameras[index].bottom = - height / 2;
-    cameras[index].updateProjectionMatrix();
-}
 
-function switchCamera(index) {
+function onResize() {
     "use strict";
-
-    activeCamera = index;
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);    
+    resizeCameraPerspective();
+    
 }
 
 function onKeyDown(e) {
     "use strict";
     switch (e.keyCode) {
-        case 49: //1
-        switchCamera(0);
-        break;
-        case 50: //2
-        switchCamera(1);
-        break;
-        case 51: //3
-        switchCamera(2);
-        break;
         case 65: //A
         case 97: //a
         scene.traverse(function(node) {
@@ -352,7 +406,7 @@ function onKeyUp(e) {
 function render() {
     "use strict";
 
-    renderer.render(scene, cameras[activeCamera]);
+    renderer.render(scene, camera);
 }
 
 function init() {
@@ -365,9 +419,8 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera(0, 0, 30, 0);
-    createCamera(1, 30, LAMP_HEIGHT / 2, 0);
-    createCamera(2, 0, LAMP_HEIGHT / 2, 30);
+    createPerspectiveCamera(20, 20, 20);
+    
 
     render();
 
@@ -376,6 +429,8 @@ function init() {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
     window.addEventListener("keyup", onKeyUp);
+    
+    var controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 }
 
