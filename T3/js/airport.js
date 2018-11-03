@@ -13,6 +13,9 @@ const DISTANCE_LAMPS = 20;
 const LAMP_BASE_RADIUS = 2.5;
 const LAMP_HEIGHT = 14;
 
+const midpoint = (A, B, n, nm1) => new THREE.Vector3((A.x + B.x) * nm1 / n, (A.y + B.y) * nm1 / n, (A.z + B.z) * nm1 / n)
+const midpointGeo = (geo, a, b, n, nm1) => midpoint(geo.vertices[a], geo.vertices[b], n, nm1)
+
 class Object3D extends THREE.Object3D {
 
     constructor() {
@@ -52,7 +55,7 @@ class Floor extends Object3D {
 }
 
 class Plane extends Object3D{
-    constructor(x,y,z){
+    constructor(x, y, z) {
         super();
   
         this.addBody(0,0,0);
@@ -65,30 +68,28 @@ class Plane extends Object3D{
 
         var bodyGeometry = new THREE.Geometry();
 
+        var bodyMaterial = new THREE.MeshBasicMaterial({
+            color: 0x663300,
+            wireframe: true
+        });
+
         bodyGeometry.vertices.push(
-            new THREE.Vector3(-1, 1, 0 ),
-            new THREE.Vector3(-1, -1, 0 ),
-            new THREE.Vector3(1, -1, 0 ),
-            new THREE.Vector3(0, -1, 5),
-            new THREE.Vector3(0, -1, -5),
-            new THREE.Vector3( -2, 2, 0 )
+            new THREE.Vector3(0, 0, -2.5),
+            new THREE.Vector3(0, 10, -2.5),
+            new THREE.Vector3(15, 0, -2.5),
+            new THREE.Vector3(-25, 0, -2.5),
+            new THREE.Vector3(-25, 10, -2.5),
         );
 
-        bodyGeometry.faces.push( new THREE.Face3(0, 1, 2) );
-        bodyGeometry.faces.push( new THREE.Face3(3, 1, 2) );
-        bodyGeometry.faces.push( new THREE.Face3(4, 1, 2) );
+        bodyGeometry.vertices.push(midpointGeo(bodyGeometry, 0, 1, 2, 1)) //mete um vertice entre o 0 e o 1
 
+        bodyGeometry.faces.push(new THREE.Face3(0, 1, 2));
+        bodyGeometry.faces.push(new THREE.Face3(0, 3, 4));
+        bodyGeometry.faces.push(new THREE.Face3(0, 4, 1));
 
-       // geometry.computeBoundingSphere();
-        var baseMaterial = new THREE.MeshBasicMaterial({
-        color: 0x663300,
-        wireframe: true
-    });
-        
-        var baseMesh = new THREE.Mesh(bodyGeometry, baseMaterial);
-
-        baseMesh.position.set(x, y, z);
-        this.add(baseMesh);
+        var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        bodyMesh.position.set(x + 5, y, z);
+        this.add(bodyMesh);
     }
 }
 
@@ -195,7 +196,7 @@ function createScene() {
     scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Floor(0, 0, 0));
-    scene.add(new Plane(0,2,0));
+    scene.add(new Plane(0, 2, 0));
 }
 
 function createCamera(index, x, y, z) {
