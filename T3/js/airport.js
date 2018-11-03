@@ -12,8 +12,24 @@ const DISTANCE_LAMPS = 20;
 const LAMP_BASE_RADIUS = 2.5;
 const LAMP_HEIGHT = 14;
 
-const midpoint = (A, B, n, nm1) => new THREE.Vector3((A.x + B.x) * nm1 / n, (A.y + B.y) * nm1 / n, (A.z + B.z) * nm1 / n)
-const midpointGeo = (geo, a, b, n, nm1) => midpoint(geo.vertices[a], geo.vertices[b], n, nm1)
+//const midpoint = (A, B, n, nm1) => new THREE.Vector3((A.x + B.x) * nm1 / n, (A.y + B.y) * nm1 / n, (A.z + B.z) * nm1 / n)
+//const midpointGeo = (geo, a, b, n, nm1) => midpoint(geo.vertices[a], geo.vertices[b], n, nm1)
+
+const midpoint = (A, B, C) => new THREE.Vector3((A.x + B.x + C.x) / 3, (A.y + B.y + C.y) / 3, (A.z + B.z + C.z) / 3)
+
+function pushSegmentedFace(geo, a, b, c, level) {
+    if (level) {
+        geo.vertices.push(midpoint(geo.vertices[a], geo.vertices[b], geo.vertices[c]))
+
+        var lenV = geo.vertices.length - 1
+        pushSegmentedFace(geo, a, b, lenV, level - 1)
+        pushSegmentedFace(geo, b, c, lenV, level - 1)
+        pushSegmentedFace(geo, c, a, lenV, level - 1)
+
+    } else {
+        geo.faces.push(new THREE.Face3(a, b, c));
+    } 
+}
 
 const A = 0;
 const B = 1;
@@ -66,8 +82,8 @@ class Plane extends Object3D{
     constructor(x, y, z) {
         super();
   
-       // this.addBody(0,0,0);
-        this.addWing(0,0,0);
+        this.addBody(0, 0, 0);
+        this.addWing(0, 0, 0);
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
     }
@@ -78,8 +94,10 @@ class Plane extends Object3D{
         var bodyGeometry = new THREE.Geometry();
 
         var bodyMaterial = new THREE.MeshBasicMaterial({
-            color: 0x663300,
-            wireframe: true
+            color: 0x9ef442,
+            wireframe: true,
+			opacity: 0.5,
+			transparent: true
         });
 
         bodyGeometry.vertices.push(
@@ -88,13 +106,35 @@ class Plane extends Object3D{
             new THREE.Vector3(15, 0, -2.5),
             new THREE.Vector3(-25, 0, -2.5),
             new THREE.Vector3(-25, 10, -2.5),
+            
+            new THREE.Vector3(0, 0, 2.5),
+            new THREE.Vector3(0, 10, 2.5),
+            new THREE.Vector3(15, 0, 2.5),
+            new THREE.Vector3(-25, 0, 2.5),
+            new THREE.Vector3(-25, 10, 2.5)
         );
 
-        bodyGeometry.vertices.push(midpointGeo(bodyGeometry, 0, 1, 2, 1)) //mete um vertice entre o 0 e o 1
-
-        bodyGeometry.faces.push(new THREE.Face3(0, 1, 2));
-        bodyGeometry.faces.push(new THREE.Face3(0, 3, 4));
-        bodyGeometry.faces.push(new THREE.Face3(0, 4, 1));
+        const l = 0
+        //uma parede
+        pushSegmentedFace(bodyGeometry, 0, 1, 2, l);
+        pushSegmentedFace(bodyGeometry, 0, 3, 4, l);
+        pushSegmentedFace(bodyGeometry, 0, 4, 1, l);
+        //outra parede
+        pushSegmentedFace(bodyGeometry, 7, 6, 5, l);
+        pushSegmentedFace(bodyGeometry, 9, 8, 5, l);
+        pushSegmentedFace(bodyGeometry, 6, 9, 5, l);
+        //parte da frente
+        pushSegmentedFace(bodyGeometry, 2, 1, 6, l);
+        pushSegmentedFace(bodyGeometry, 2, 6, 7, l);
+        //parte de cima
+        pushSegmentedFace(bodyGeometry, 1, 4, 9, l);
+        pushSegmentedFace(bodyGeometry, 1, 9, 6, l);
+        //parte de tras
+        pushSegmentedFace(bodyGeometry, 4, 3, 8, l);
+        pushSegmentedFace(bodyGeometry, 4, 8, 9, l);
+        //parte de baixo
+        pushSegmentedFace(bodyGeometry, 2, 8, 3, l);
+        pushSegmentedFace(bodyGeometry, 2, 7, 8, l);
 
         var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
         bodyMesh.position.set(x + 5, y, z);
@@ -143,8 +183,11 @@ class Plane extends Object3D{
         console.log(wingGeometry.faces[0])
         console.log(wingGeometry.faces[0]["b"])
         console.log(wingGeometry.faces.length)
+
         //WING2
-        for (var i = 0; i < wingGeometry.faces.length; i++) {
+        var l = wingGeometry.faces.length
+
+        for (var i = 0; i < l; i++) {
             console.log(i);
             var v1 = wingGeometry.faces[i]["a"];
             var v2 = wingGeometry.faces[i]["b"];
@@ -152,12 +195,6 @@ class Plane extends Object3D{
             wingGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
         }
 
-       
-
-        
-
-
-       // geometry.computeBoundingSphere();
         var wingMaterial = new THREE.MeshBasicMaterial({
         color: 0xff0000,
         wireframe: true
@@ -273,8 +310,8 @@ function createScene() {
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
     scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
-   // scene.add(new Floor(0, 0, 0));
-    scene.add(new Plane(0,2,0));
+    scene.add(new Floor(0, 0, 0));
+    scene.add(new Plane(0, 2, 0));
 }
 
 function calcCameraSize() {
