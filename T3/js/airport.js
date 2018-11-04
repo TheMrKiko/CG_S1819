@@ -66,7 +66,7 @@ class Floor extends Object3D {
     addFloor(x,y,z) {
         "use strict";
     
-        var floorMaterial = new THREE.MeshBasicMaterial({
+        var floorMaterial = new THREE.MeshPhongMaterial({
             color: 0x00ffff,
             wireframe: true
         });
@@ -96,11 +96,10 @@ class Plane extends Object3D{
 
         var bodyGeometry = new THREE.Geometry();
 
-        var bodyMaterial = new THREE.MeshBasicMaterial({
+        var bodyMaterial = new THREE.MeshPhongMaterial({
             color: 0x9ef442,
             wireframe: true,
-			opacity: 0.5,
-			transparent: true
+			
         });
 
         bodyGeometry.vertices.push(
@@ -141,6 +140,8 @@ class Plane extends Object3D{
 
         var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
         bodyMesh.position.set(x + 5, y, z);
+        bodyGeometry.computeFaceNormals();
+        bodyGeometry.computeVertexNormals();
         bodyMesh.castShadow = true;
         this.add(bodyMesh);
     }
@@ -416,17 +417,20 @@ class Lamp extends Object3D {
         var lampGeometry = new THREE.SphereGeometry(2, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
 
         var lampMesh = new THREE.Mesh(lampGeometry, lampMaterial);
-
+       
         lampMesh.position.set(x, y, z);
         this.add(lampMesh);
     }
 }
 function createGlobalLight(){
-    global_light = new THREE.DirectionalLight(0xffffff,5);		
+    global_light = new THREE.DirectionalLight(0xffffff);		
     global_light.castShadow = true; 
-    global_light.shadowDarkness = 0.8;
-    global_light.target.position.set(0,2,0);
-    global_light.target.updateMatrixWorld();           
+    global_light.target.position.set(0,0,0);
+    global_light.target.updateMatrixWorld();
+
+    global_light.shadow.camera.near = 0.5;      
+    global_light.shadow.camera.far = 25;     
+      
     scene.add( global_light );
 
 
@@ -562,7 +566,7 @@ function render() {
 
     renderer.render(scene, camera);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
 }
 
 
