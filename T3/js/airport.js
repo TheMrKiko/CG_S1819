@@ -86,7 +86,7 @@ class Plane extends Object3D{
         this.addBody(0, 0, 0);
         this.addWing(0, 0, 0, 5);
         this.addWingStabilizer(0,0,0, 5, 1/3);
-        this.addStabilizer(0,10,-20);
+        
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
     }
@@ -247,7 +247,8 @@ class Plane extends Object3D{
         stabilizerGeometry.faces.push(new THREE.Face3(4, 5, 1));
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
-        stabilizerMesh.castShadow = true; 
+        stabilizerMesh.castShadow = true;
+        stabilizerMesh.position.set(x, y, z); 
         this.add(stabilizerMesh);
         }
 
@@ -328,6 +329,8 @@ class Plane extends Object3D{
         stabilizerMesh.castShadow = true;
         stabilizerMesh.position.set(x, y, z);        
         this.add(stabilizerMesh);
+        console.log(y)
+        this.addStabilizer(x, y + 2, z -5);
     }
 }
 
