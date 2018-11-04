@@ -108,6 +108,7 @@ class Plane extends Object3D {
         this.isRotatingY = 0;
 
         this.addBody(0, 0, 0);
+        this.addCockpit(0,0,0);
         this.addWing(0, 0, 0, 5, 1.2);
         this.addWingStabilizer(0,3,-15, 5,1/2);
         
@@ -172,6 +173,40 @@ class Plane extends Object3D {
 
         this.add(bodyMesh);
     }
+    addCockpit(x,y,z){
+        
+        var cockpitGeometry = new THREE.Geometry();
+
+        var cockpitMaterial = new THREE.MeshPhongMaterial({
+            color: 	0x48d1ff,
+            wireframe: true,
+			
+        });
+        cockpitGeometry.vertices.push(
+            new THREE.Vector3(-2.5, 5,0),
+            new THREE.Vector3(-2.5, 3.5 ,4.5),
+            new THREE.Vector3(-2.5, 5, 4.5),
+            new THREE.Vector3(2.5, 5,0),
+            new THREE.Vector3(2.5, 3.5 ,4.5),
+            new THREE.Vector3(2.5, 5, 4.5),
+            
+        );
+        cockpitGeometry.faces.push( new THREE.Face3(0, 1, 2));
+        cockpitGeometry.faces.push( new THREE.Face3(3, 5, 4));
+        cockpitGeometry.faces.push( new THREE.Face3(0, 2, 3));
+        cockpitGeometry.faces.push( new THREE.Face3(3, 2, 5));
+        cockpitGeometry.faces.push( new THREE.Face3(5, 1, 4));
+        cockpitGeometry.faces.push( new THREE.Face3(2, 1, 5));
+        cockpitGeometry.faces.push( new THREE.Face3(0, 4, 1));
+        cockpitGeometry.faces.push( new THREE.Face3(3, 5, 1));
+
+        var cockpitMesh = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+        cockpitMesh.position.set(x, y, z+5);
+        cockpitGeometry.computeFaceNormals();
+        cockpitGeometry.computeVertexNormals();
+        cockpitMesh.castShadow = true;
+        this.add(cockpitMesh);
+    }
 
     addWing(x,y,z, distance, scalefactor){
         "use strict";
@@ -197,6 +232,7 @@ class Plane extends Object3D {
             new THREE.Vector3(12,1,0), // UP C - 13 
             new THREE.Vector3(2,1,0), //  UP E - 14
             new THREE.Vector3(0,1,0), //UP A - 15
+            
         );
 
         updateVerticesDistanceAndScale(wingGeometry.vertices, distance, scalefactor);
@@ -663,10 +699,8 @@ function render() {
     "use strict";
 
     renderer.render(scene, camera);
-    //renderer.shadowMap.enabled = true;
-    //renderer.shadowMap.type = THREE.PCFShadowMap;
-    //renderer.shadowMap.enabled = true;
-   // renderer.shadowMap.type = THREE.BasicShadowMap;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 }
 
 
