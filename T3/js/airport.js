@@ -74,7 +74,7 @@ class Floor extends Object3D {
 
         var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
         floorMesh.receiveShadow = true;
-        floorMesh.position.set(x, y - 0.25, z);
+        floorMesh.position.set(x, y, z);
         this.add(floorMesh);
     }
 }
@@ -85,7 +85,7 @@ class Plane extends Object3D{
   
         this.addBody(0, 0, 0);
         this.addWing(0, 0, 0, 5);
-        this.addWingStabilizer(0,0,0, 5, 1/3);
+        this.addWingStabilizer(0,3,-15, 5,1);
         
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
@@ -97,23 +97,23 @@ class Plane extends Object3D{
         var bodyGeometry = new THREE.Geometry();
 
         var bodyMaterial = new THREE.MeshPhongMaterial({
-            color: 0x9ef442,
+            color: 0x696969,
             wireframe: true,
 			
         });
 
         bodyGeometry.vertices.push(
             new THREE.Vector3(0, 0, -2.5),
-            new THREE.Vector3(0, 10, -2.5),
+            new THREE.Vector3(0, 5, -2.5),
             new THREE.Vector3(15, 0, -2.5),
             new THREE.Vector3(-25, 0, -2.5),
-            new THREE.Vector3(-25, 10, -2.5),
+            new THREE.Vector3(-25, 5, -2.5),
             
             new THREE.Vector3(0, 0, 2.5),
-            new THREE.Vector3(0, 10, 2.5),
+            new THREE.Vector3(0, 5, 2.5),
             new THREE.Vector3(15, 0, 2.5),
             new THREE.Vector3(-25, 0, 2.5),
-            new THREE.Vector3(-25, 10, 2.5)
+            new THREE.Vector3(-25, 5, 2.5)
         );
 
         const l = 0
@@ -139,10 +139,11 @@ class Plane extends Object3D{
         pushSegmentedFace(bodyGeometry, 2, 7, 8, l);
 
         var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        bodyMesh.position.set(x + 5, y, z);
+        bodyMesh.position.set(x, y, z+5);
         bodyGeometry.computeFaceNormals();
         bodyGeometry.computeVertexNormals();
         bodyMesh.castShadow = true;
+        bodyMesh.rotateY(-1.57079633);
         this.add(bodyMesh);
     }
 
@@ -212,7 +213,7 @@ class Plane extends Object3D{
     
         var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
         wingMesh.castShadow = true;
-        wingMesh.position.set(x, y, z);
+        wingMesh.position.set(x, y+1, z);
         this.add(wingMesh);
 
     }
