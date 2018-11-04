@@ -32,6 +32,27 @@ function pushSegmentedFace(geo, a, b, c, level) {
     } 
 }
 
+function updateVerticesDistanceAndScale(array, distance, scalefactor) {
+    for (let index = 0; index < array.length; index++) {
+        console.log(array[index])
+        //stabilizerGeometry.vertices[index].setX(69);
+        var diff = index < 8 ? array[index].x - (distance/2 * 1/scalefactor): (array[index].x + (distance/2 * 1/scalefactor));
+        console.log(diff)
+        array[index].setX(diff);
+        console.log(array[index].x)
+        console.log(array[index])
+    }
+}
+
+function scaleMesh(mesh, scalefactor) {
+    var m = new THREE.Matrix4();
+        m.set(scalefactor, 0, 0, 0,
+                0,scalefactor,0,0,
+                0,0,scalefactor,0,
+                0,0,0,1)
+    mesh.applyMatrix(m);
+}
+
 const A = 0;
 const B = 1;
 const C = 2;
@@ -84,8 +105,8 @@ class Plane extends Object3D{
         super();
   
         this.addBody(0, 0, 0);
-        this.addWing(0, 0, 0, 5);
-        this.addWingStabilizer(0,3,-15, 5,1);
+        this.addWing(0, 0, 0, 5, 1.2);
+        this.addWingStabilizer(0,3,-15, 5,1/2);
         
         this.add(new THREE.AxesHelper(3));
         this.position.set(x,y,z);
@@ -147,7 +168,7 @@ class Plane extends Object3D{
         this.add(bodyMesh);
     }
 
-    addWing(x,y,z, distance){
+    addWing(x,y,z, distance, scalefactor){
         "use strict";
 
         var wingGeometry = new THREE.Geometry();
@@ -173,15 +194,7 @@ class Plane extends Object3D{
             new THREE.Vector3(0,1,0), //UP A - 15
         );
 
-        for (let index = 0; index < wingGeometry.vertices.length; index++) {
-            console.log(wingGeometry.vertices[index])
-            //stabilizerGeometry.vertices[index].setX(69);
-            var diff = index < 8 ? (wingGeometry.vertices[index].x - distance/2) : (wingGeometry.vertices[index].x + distance/2);
-            console.log(diff)
-            wingGeometry.vertices[index].setX(diff);
-            console.log(wingGeometry.vertices[index].x)
-            console.log(wingGeometry.vertices[index])
-        }
+        updateVerticesDistanceAndScale(wingGeometry.vertices, distance, scalefactor);
 
         wingGeometry.faces.push( new THREE.Face3(0, 2, 1));
         wingGeometry.faces.push( new THREE.Face3(2, 4, 3));
@@ -212,6 +225,9 @@ class Plane extends Object3D{
         });
     
         var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
+        
+        scaleMesh(wingMesh, scalefactor);
+
         wingMesh.castShadow = true;
         wingMesh.position.set(x, y+1, z);
         this.add(wingMesh);
@@ -249,7 +265,7 @@ class Plane extends Object3D{
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
         stabilizerMesh.castShadow = true;
-        stabilizerMesh.position.set(x, y, z); 
+        stabilizerMesh.position.set(x + 0.25, y, z); 
         this.add(stabilizerMesh);
         }
 
@@ -285,18 +301,10 @@ class Plane extends Object3D{
             new THREE.Vector3(2,1,0), //  UP E - 14
             new THREE.Vector3(0,1,0), //UP A - 15
         )
-        
-        for (let index = 0; index < stabilizerGeometry.vertices.length; index++) {
-            console.log(stabilizerGeometry.vertices[index])
-            //stabilizerGeometry.vertices[index].setX(69);
-            var diff = index < 8 ? (stabilizerGeometry.vertices[index].x - distance/2) * 1/scalefactor : (stabilizerGeometry.vertices[index].x + distance/2) * 1/scalefactor;
-            console.log(diff)
-            stabilizerGeometry.vertices[index].setX(diff);
-            console.log(stabilizerGeometry.vertices[index].x)
-            console.log(stabilizerGeometry.vertices[index])
-        }
-        
 
+        console.log(stabilizerGeometry.vertices)
+        updateVerticesDistanceAndScale(stabilizerGeometry.vertices, distance, scalefactor);
+        
         stabilizerGeometry.faces.push( new THREE.Face3(0, 2, 1));
         stabilizerGeometry.faces.push( new THREE.Face3(2, 4, 3));
         stabilizerGeometry.faces.push( new THREE.Face3(2, 5, 6));
@@ -321,12 +329,9 @@ class Plane extends Object3D{
         }
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
-        var m = new THREE.Matrix4();
-        m.set(scalefactor, 0, 0, 0,
-                0,scalefactor,0,0,
-                0,0,scalefactor,0,
-                0,0,0,1)
-        stabilizerMesh.applyMatrix(m);
+        
+        scaleMesh(stabilizerMesh, scalefactor);
+
         stabilizerMesh.castShadow = true;
         stabilizerMesh.position.set(x, y, z);        
         this.add(stabilizerMesh);
@@ -427,15 +432,21 @@ class Lamp extends Object3D {
     }
 }
 function createGlobalLight(){
-    global_light = new THREE.DirectionalLight(0xffffff);		
+    global_light = new THREE.DirectionalLight(0xffffff,1);		
+    global_light.position.set(200,800,200);
+    global_light.shadow = new THREE.LightShadow(new THREE.PerspectiveCamera(scene.position, 150, 150, 150));
+    global_light.shadow.bias = 0.0001;
+    global_light.shadow.mapSize.width = 2048;
+    global_light.shadow.mapSize.height = 2048;
+    
     global_light.castShadow = true; 
-    global_light.target.position.set(0,0,0);
-    global_light.target.updateMatrixWorld();
-
-    global_light.shadow.camera.near = 0.5;      
-    global_light.shadow.camera.far = 25;     
-      
     scene.add( global_light );
+
+    //global_light.target.updateMatrixWorld();
+
+    //global_light.shadow.camera.near = 0.5;      
+    //global_light.shadow.camera.far = 25;     
+      
 
 
 }
@@ -569,8 +580,10 @@ function render() {
     "use strict";
 
     renderer.render(scene, camera);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
+    //renderer.shadowMap.enabled = true;
+    //renderer.shadowMap.type = THREE.PCFShadowMap;
+    //renderer.shadowMap.enabled = true;
+   // renderer.shadowMap.type = THREE.BasicShadowMap;
 }
 
 
@@ -580,6 +593,8 @@ function init() {
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
