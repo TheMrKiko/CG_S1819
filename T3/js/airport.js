@@ -1,5 +1,6 @@
 var scene, renderer, clock;
 var camera;
+var global_light;
 
 const ANGULAR_VELOCITY = Math.PI/2;
 const ASPECT_RATIO = 16/9;
@@ -66,13 +67,13 @@ class Floor extends Object3D {
         "use strict";
     
         var floorMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
+            color: 0x00ffff,
             wireframe: true
         });
         var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 10, 1, 10);
 
         var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
-
+        floorMesh.receiveShadow = true;
         floorMesh.position.set(x, y - 0.25, z);
         this.add(floorMesh);
     }
@@ -140,6 +141,7 @@ class Plane extends Object3D{
 
         var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
         bodyMesh.position.set(x + 5, y, z);
+        bodyMesh.castShadow = true;
         this.add(bodyMesh);
     }
 
@@ -208,7 +210,7 @@ class Plane extends Object3D{
         });
     
         var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
-
+        wingMesh.castShadow = true;
         wingMesh.position.set(x, y, z);
         this.add(wingMesh);
 
@@ -244,7 +246,7 @@ class Plane extends Object3D{
         stabilizerGeometry.faces.push(new THREE.Face3(4, 5, 1));
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
-        stabilizerMesh.position.set(x+0.25, y, z);
+        stabilizerMesh.castShadow = true; 
         this.add(stabilizerMesh);
         }
 
@@ -317,15 +319,13 @@ class Plane extends Object3D{
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
         var m = new THREE.Matrix4();
-        m.set(scalefactor, 0, 0, 0,
-            0,scalefactor,0,0,
-            0,0,scalefactor,0,
-            0,0,0,1)
-            stabilizerMesh.applyMatrix(m);
-            
-            stabilizerMesh.position.set(x, y, z);
-
-        
+        m.set(1/3, 0, 0, 0,
+                0,1/3,0,0,
+                0,0,1/3,0,
+                0,0,0,1)
+        stabilizerMesh.applyMatrix(m);
+        stabilizerMesh.castShadow = true;
+        stabilizerMesh.position.set(x, y, z);        
         this.add(stabilizerMesh);
     }
 }
@@ -348,7 +348,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var baseMaterial = new THREE.MeshBasicMaterial({
-            color: 0x663300,
+            color: 0x696969,
             wireframe: true
         });
         var baseGeometry = new THREE.CylinderGeometry(LAMP_BASE_RADIUS, LAMP_BASE_RADIUS, 0.5, 20);
@@ -363,7 +363,7 @@ class Lamp extends Object3D {
         "use strict";
 
         var tubeMaterial = new THREE.MeshBasicMaterial({
-            color: 0x663300,
+            color: 	0x696969,
             wireframe: true
         });
         var tubeGeometry = new THREE.CylinderGeometry(0.5, 0.5, LAMP_HEIGHT, 15);
@@ -413,7 +413,7 @@ class Lamp extends Object3D {
             color: 0xffff1a,
             wireframe: true
         });
-        var lampGeometry = new THREE.SphereGeometry(0.7, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
+        var lampGeometry = new THREE.SphereGeometry(2, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
 
         var lampMesh = new THREE.Mesh(lampGeometry, lampMaterial);
 
@@ -421,7 +421,20 @@ class Lamp extends Object3D {
         this.add(lampMesh);
     }
 }
+function createGlobalLight(){
+    global_light = new THREE.DirectionalLight(0xffffff,5);		
+    global_light.castShadow = true; 
+    global_light.shadowDarkness = 0.8;
+    global_light.target.position.set(0,2,0);
+    global_light.target.updateMatrixWorld();           
+    scene.add( global_light );
 
+
+}
+
+function global_light_switcher() {
+	global_light.visible = !global_light.visible;
+}
 function createScene() {
     "use strict";
     
@@ -434,6 +447,9 @@ function createScene() {
     scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
     scene.add(new Floor(0, 0, 0));
     scene.add(new Plane(0, 2, 0));
+}
+function createLight(){
+    createGlobalLight();
 }
 
 function calcCameraSize() {
@@ -487,6 +503,8 @@ function onResize() {
     
 }
 
+
+
 function onKeyDown(e) {
     "use strict";
     switch (e.keyCode) {
@@ -503,39 +521,16 @@ function onKeyDown(e) {
         scene.traverse(function(node) {
             if (node instanceof THREE.AxesHelper) {
                 node.visible = !node.visible;
+               
             }
         });
         break;
-        case 38: //up
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.friction = false;
-                node.acceleration = new THREE.Vector3(0, 0, ACCELERATION);
-            }
-        });
+        case 78://N
+        case 110://n 
+        console.log("Oi")
+        global_light_switcher();
+        
         break;
-        case 40: //down
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.friction = false;
-                node.acceleration = new THREE.Vector3(0, 0, -ACCELERATION);
-            }
-        });
-        break;
-        case 37: //left
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.angularVelocity = ANGULAR_VELOCITY;
-            }
-        });
-        break;
-        case 39: //right
-        scene.traverse(function(node) {
-            if (node instanceof Chair) {
-                node.angularVelocity = -ANGULAR_VELOCITY;
-            }
-        });
-            break;
     }
 }
 
@@ -559,14 +554,17 @@ function onKeyUp(e) {
                 node.angularVelocity = 0;
             }
         });
-        break;
+        break
     }
 }
 function render() {
     "use strict";
 
     renderer.render(scene, camera);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 }
+
 
 function init() {
     "use strict";
@@ -579,6 +577,7 @@ function init() {
 
     createScene();
     createPerspectiveCamera(20, 20, 20);
+    createLight();
     
 
     render();
