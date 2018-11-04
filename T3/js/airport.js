@@ -1,6 +1,7 @@
 var scene, renderer, clock;
 var camera;
 var global_light;
+var spotLight = Array(4);
 
 const ANGULAR_VELOCITY = Math.PI/2;
 const ASPECT_RATIO = 16/9;
@@ -12,6 +13,12 @@ const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const DISTANCE_LAMPS = 20;
 const LAMP_BASE_RADIUS = 2.5;
 const LAMP_HEIGHT = 14;
+
+var lampsPos = [[DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
+                [-DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
+                [DISTANCE_LAMPS, 0, -DISTANCE_LAMPS],
+                [-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS]];
+
 
 //const midpoint = (A, B, n, nm1) => new THREE.Vector3((A.x + B.x) * nm1 / n, (A.y + B.y) * nm1 / n, (A.z + B.z) * nm1 / n)
 //const midpointGeo = (geo, a, b, n, nm1) => midpoint(geo.vertices[a], geo.vertices[b], n, nm1)
@@ -32,15 +39,11 @@ function pushSegmentedFace(geo, a, b, c, level) {
     } 
 }
 
+//atualiza a distancia entre vertices para que se mantenha numa scale posterior
 function updateVerticesDistanceAndScale(array, distance, scalefactor) {
     for (let index = 0; index < array.length; index++) {
-        console.log(array[index])
-        //stabilizerGeometry.vertices[index].setX(69);
         var diff = index < 8 ? array[index].x - (distance/2 * 1/scalefactor): (array[index].x + (distance/2 * 1/scalefactor));
-        console.log(diff)
         array[index].setX(diff);
-        console.log(array[index].x)
-        console.log(array[index])
     }
 }
 
@@ -212,14 +215,13 @@ class Plane extends Object3D{
         //WING2
         var len = wingGeometry.faces.length;
         for (var i = 0; i < len; i++) {
-            //console.log(i);
             var v1 = wingGeometry.faces[i]["a"];
             var v2 = wingGeometry.faces[i]["b"];
             var v3 = wingGeometry.faces[i]["c"];
             wingGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
         }
 
-        var wingMaterial = new THREE.MeshBasicMaterial({
+        var wingMaterial = new THREE.MeshPhongMaterial({
         color: 0xff0000,
         wireframe: true
         });
@@ -229,6 +231,8 @@ class Plane extends Object3D{
         scaleMesh(wingMesh, scalefactor);
 
         wingMesh.castShadow = true;
+        wingGeometry.computeFaceNormals();
+        wingGeometry.computeVertexNormals();
         wingMesh.position.set(x, y+1, z);
         this.add(wingMesh);
 
@@ -239,7 +243,7 @@ class Plane extends Object3D{
 
         var stabilizerGeometry = new THREE.Geometry();
 
-        var stabilizerMaterial = new THREE.MeshBasicMaterial({
+        var stabilizerMaterial = new THREE.MeshPhongMaterial({
             color: 0x0000ff,
             wireframe: true
         });
@@ -265,6 +269,8 @@ class Plane extends Object3D{
 
         var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
         stabilizerMesh.castShadow = true;
+        stabilizerGeometry.computeFaceNormals();
+        stabilizerGeometry.computeVertexNormals();
         stabilizerMesh.position.set(x + 0.25, y, z); 
         this.add(stabilizerMesh);
         }
@@ -275,7 +281,7 @@ class Plane extends Object3D{
 
         var stabilizerGeometry = new THREE.Geometry();
 
-        var stabilizerMaterial = new THREE.MeshBasicMaterial({
+        var stabilizerMaterial = new THREE.MeshPhongMaterial({
             color: 0x0000ff,
             wireframe: true
         });
@@ -333,9 +339,10 @@ class Plane extends Object3D{
         scaleMesh(stabilizerMesh, scalefactor);
 
         stabilizerMesh.castShadow = true;
+        stabilizerGeometry.computeFaceNormals();
+        stabilizerGeometry.computeVertexNormals();
         stabilizerMesh.position.set(x, y, z);        
         this.add(stabilizerMesh);
-        console.log(y)
         this.addStabilizer(x, y + 2, z -5);
     }
 }
@@ -349,7 +356,7 @@ class Lamp extends Object3D {
         //this.addReflector(0, 13, 0);
         this.addHolder(0, 14.5, 0);
         this.addLamp(0, 15 ,0);
-        //this.add(new THREE.AxesHelper(3));
+        this.add(new THREE.AxesHelper(3));
 
         this.position.set(x, y, z);
     }
@@ -434,6 +441,8 @@ class Lamp extends Object3D {
 function createGlobalLight(){
     global_light = new THREE.DirectionalLight(0xffffff,1);		
     global_light.position.set(200,800,200);
+
+    //HELP WITH THE SHADOWS
     global_light.shadow = new THREE.LightShadow(new THREE.PerspectiveCamera(scene.position, 150, 150, 150));
     global_light.shadow.bias = 0.0001;
     global_light.shadow.mapSize.width = 2048;
@@ -451,6 +460,31 @@ function createGlobalLight(){
 
 }
 
+function createSpotLight() {
+    for (let i = 0; i < spotLight.length; i++) {
+        spotLight[i] = new THREE.SpotLight( 0xffffff, 1, 50, Math.PI/8);
+        //spotlights in lamps positions
+        spotLight[i].position.set(lampsPos[i][0], LAMP_HEIGHT + 5 ,lampsPos[i][2]);
+        spotLight.castShadow = true;
+
+        /*spotLight[i].shadow.mapSize.width = 1024;
+        spotLight[i].shadow.mapSize.height = 1024;
+
+        spotLight[i].shadow.camera.near = 500;
+        spotLight[i].shadow.camera.far = 4000;
+        spotLight[i].shadow.camera.fov = 30;*/
+        scene.add( spotLight[i] );
+    }
+    
+
+    
+
+    
+}
+function spotLight_switcher(light) {
+    spotLight[light].visible = !spotLight[light].visible;
+}
+
 function global_light_switcher() {
 	global_light.visible = !global_light.visible;
 }
@@ -460,15 +494,18 @@ function createScene() {
     scene = new THREE.Scene();
     
     scene.add(new THREE.AxesHelper(5));
-    scene.add(new Lamp(DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
-    scene.add(new Lamp(-DISTANCE_LAMPS, 0, DISTANCE_LAMPS))
-    scene.add(new Lamp(DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
-    scene.add(new Lamp(-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS))
+    //create lamps
+    for (let i = 0; i < lampsPos.length; i++) {
+        scene.add(new Lamp(lampsPos[i][0], lampsPos[i][1] ,lampsPos[i][2]));
+        
+    }
+
     scene.add(new Floor(0, 0, 0));
     scene.add(new Plane(0, 2, 0));
 }
 function createLight(){
-    createGlobalLight();
+    //createGlobalLight();
+    createSpotLight();
 }
 
 function calcCameraSize() {
@@ -549,6 +586,19 @@ function onKeyDown(e) {
         console.log("Oi")
         global_light_switcher();
         
+        break;
+
+        case 49:
+        spotLight_switcher(0);
+        break;
+        case 50:
+        spotLight_switcher(1);
+        break;
+        case 51:
+        spotLight_switcher(2);
+        break;
+        case 52:
+        spotLight_switcher(3);
         break;
     }
 }
