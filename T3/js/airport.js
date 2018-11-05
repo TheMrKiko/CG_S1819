@@ -2,6 +2,7 @@ var scene, renderer, clock;
 var camera;
 var global_light;
 var spotLight = Array(4);
+var plane;
 
 const ANGULAR_VELOCITY = Math.PI/2;
 const ASPECT_RATIO = 16/9;
@@ -10,9 +11,9 @@ const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 
-const DISTANCE_LAMPS = 20;
+const DISTANCE_LAMPS = 40;
 const LAMP_BASE_RADIUS = 2.5;
-const LAMP_HEIGHT = 14;
+const LAMP_HEIGHT = 30;
 
 var lampsPos = [[DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
                 [-DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
@@ -120,6 +121,8 @@ class Mesh extends THREE.Mesh {
         super(geometry, materialsArray[0]);
         this.materialsArray = materialsArray;
         this.lightMaterialIndex = 0;
+        this.previousIndex = 0;
+        this.hasFlatMaterial = false;
         this.lightMaterialsArray = [materialsArray[0], materialsArray[1]];
         this.flatMaterial = materialsArray[2];
         return this;
@@ -174,7 +177,6 @@ class Plane extends Object3D {
         "use strict";
         
         var bodyGeometry = new THREE.Geometry();
-        
 
         var bodyMaterial = {
             color: 0x696969,
@@ -198,7 +200,7 @@ class Plane extends Object3D {
 
         const l = 0
         //uma parede
-        pushSegmentedFace2(bodyGeometry, 0, 1, 2, 1);
+        pushSegmentedFace(bodyGeometry, 0, 1, 2, l);
         pushSegmentedFace(bodyGeometry, 0, 3, 4, l);
         pushSegmentedFace(bodyGeometry, 0, 4, 1, l);
         //outra parede
@@ -229,7 +231,6 @@ class Plane extends Object3D {
         this.add(bodyMesh);
     }
     addCockpit(x,y,z){
-        var modifier = new THREE.SubdivisionModifier(4);
         var cockpitGeometry = new THREE.Geometry();
 
         var cockpitMaterial = {
@@ -254,7 +255,6 @@ class Plane extends Object3D {
         cockpitGeometry.faces.push( new THREE.Face3(2, 1, 5));
         cockpitGeometry.faces.push( new THREE.Face3(0, 4, 1));
         cockpitGeometry.faces.push( new THREE.Face3(3, 5, 1));
-
         var cockpitMesh = new Mesh(cockpitGeometry, cockpitMaterial);
         cockpitMesh.position.set(x, y, z+5);
         cockpitGeometry.computeFaceNormals();
@@ -265,7 +265,6 @@ class Plane extends Object3D {
 
     addWing(x,y,z, distance, scalefactor){
         "use strict";
-       
         var wingGeometry = new THREE.Geometry();
 
         wingGeometry.vertices.push(
@@ -292,8 +291,8 @@ class Plane extends Object3D {
 
         updateVerticesDistanceAndScale(wingGeometry.vertices, distance, scalefactor);
 
-        wingGeometry.faces.push( new THREE.Face3(0, 2, 1));
-        wingGeometry.faces.push( new THREE.Face3(2, 4, 3));
+        wingGeometry.faces.push( new THREE.Face3(0, 1, 2));
+        wingGeometry.faces.push( new THREE.Face3(2, 3, 4));
         wingGeometry.faces.push( new THREE.Face3(2, 5, 6));
         wingGeometry.faces.push( new THREE.Face3(2, 4, 6));
         wingGeometry.faces.push( new THREE.Face3(2, 5, 3));
@@ -318,7 +317,6 @@ class Plane extends Object3D {
         color: 0xff0000,
         wireframe: true
         };
-    
         var wingMesh = new Mesh(wingGeometry, wingMaterial);
         
         scaleMesh(wingMesh, scalefactor);
@@ -404,8 +402,8 @@ class Plane extends Object3D {
 
         updateVerticesDistanceAndScale(stabilizerGeometry.vertices, distance, scalefactor);
         
-        stabilizerGeometry.faces.push( new THREE.Face3(0, 2, 1));
-        stabilizerGeometry.faces.push( new THREE.Face3(2, 4, 3));
+        stabilizerGeometry.faces.push( new THREE.Face3(0, 1, 2));
+        stabilizerGeometry.faces.push( new THREE.Face3(2, 3, 4));
         stabilizerGeometry.faces.push( new THREE.Face3(2, 5, 6));
         stabilizerGeometry.faces.push( new THREE.Face3(2, 4, 6));
         stabilizerGeometry.faces.push( new THREE.Face3(2, 5, 3));
@@ -451,8 +449,8 @@ class Lamp extends Object3D {
         this.addBase(0, 0, 0);
         this.addTube(0, 0.5, 0)
         //this.addReflector(0, 13, 0);
-        this.addHolder(0, 14.5, 0);
-        this.addLamp(0, 15 ,0);
+        this.addHolder(0, LAMP_HEIGHT + 0.5, 0);
+        this.addLamp(0, LAMP_HEIGHT + 1 ,0);
         this.add(new THREE.AxesHelper(3));
 
         this.position.set(x, y, z);
@@ -488,7 +486,7 @@ class Lamp extends Object3D {
 
         var tubeMesh = new Mesh(tubeGeometry, tubeMaterial);
 
-        tubeMesh.position.set(x, y + 7, z);
+        tubeMesh.position.set(x, y + LAMP_HEIGHT / 2, z);
         this.add(tubeMesh);
     }
 
@@ -557,6 +555,11 @@ function createGlobalLight() {
    global_light.shadow.camera.right = 90;
    global_light.shadow.camera.top= 90;
    global_light.shadow.camera.bottom = -90;
+
+   global_light.shadow.mapSize.width = 4096;
+   global_light.shadow.mapSize.height = 4096;
+
+
    
     
     scene.add( global_light );
@@ -571,7 +574,7 @@ function createSpotLight() {
     "use strict";
 
     for (let i = 0; i < spotLight.length; i++) {
-        spotLight[i] = new THREE.SpotLight( 0xffffff, 1, 50, Math.PI/8);
+        spotLight[i] = new THREE.SpotLight( 0xffffff, 1, 100, Math.PI/4);
         //spotlights in lamps positions
         spotLight[i].position.set(lampsPos[i][0], LAMP_HEIGHT + 5, lampsPos[i][2]);
         spotLight[i].castShadow = true;
@@ -580,6 +583,7 @@ function createSpotLight() {
         spotLight[i].shadow.camera.far = 200;
         spotLight[i].shadow.mapSize.width = -1024;
         spotLight[i].shadow.mapSize.height = 1024;
+        spotLight[i].target = plane;
         scene.add( spotLight[i] );
     }
 }
@@ -604,7 +608,8 @@ function createScene() {
     }
 
     scene.add(new Floor(0, 0, 0));
-    scene.add(new Plane(0, 2, 0));
+    plane = new Plane(0, 25, 0);
+    scene.add(plane);
 }
 function createLight(){
     createGlobalLight();
@@ -691,6 +696,7 @@ function onKeyDown(e) {
         case 104://g 
         scene.traverse(function(node) {
             if (node instanceof Mesh) {
+                node.previousIndex = node.lightMaterialIndex;
                 node.lightMaterialIndex = Math.abs(node.lightMaterialIndex - 1)
                 node.material = node.lightMaterialsArray[node.lightMaterialIndex];
             }
@@ -700,7 +706,12 @@ function onKeyDown(e) {
         case 108://l 
         scene.traverse(function(node) {
             if (node instanceof Mesh) {
-                node.material = node.flatMaterial;
+                if (node.hasFlatMaterial){
+                    node.material = node.lightMaterialsArray[node.previousIndex];
+                } else {
+                    node.material = node.flatMaterial;
+                    node.hasFlatMaterial = true;
+                }
             }
         });          
         break;
@@ -720,28 +731,28 @@ function onKeyDown(e) {
         case 38: //up
         scene.traverse(function(node) {
             if (node instanceof Plane) {
-                node.isRotatingX = 1;
+                node.isRotatingX = 2;
             }
         });
         break;
         case 40: //down
         scene.traverse(function(node) {
             if (node instanceof Plane) {
-                node.isRotatingX = -1;
+                node.isRotatingX = -2;
             }
         });
         break;
         case 37: //left
         scene.traverse(function(node) {
             if (node instanceof Plane) {
-                node.isRotatingY = -1;
+                node.isRotatingY = -2;
             }
         });
         break;
         case 39: //right
         scene.traverse(function(node) {
             if (node instanceof Plane) {
-                node.isRotatingY = 1;
+                node.isRotatingY = 2;
             }
         });
             break;
@@ -774,8 +785,8 @@ function render() {
     "use strict";
 
     renderer.render(scene, camera);
-    renderer.shadowMap.enabled = true;
-   
+    //renderer.shadowMap.enabled = true;
+    //renderer.shadowMap.type = THREE.PCFShadowMap;
 }
 
 
@@ -791,7 +802,7 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createPerspectiveCamera(20, 20, 20);
+    createPerspectiveCamera(50, 50, 50);
     createLight();
     
     render();
@@ -802,8 +813,6 @@ function init() {
     window.addEventListener("resize", onResize);
     window.addEventListener("keyup", onKeyUp);
     
-    var controls = new THREE.OrbitControls(camera, renderer.domElement);
-
 }
 
 function animate() {
@@ -821,405 +830,3 @@ function animate() {
 
     requestAnimationFrame(animate);
 }
-
-/*
- *	@author zz85 / http://twitter.com/blurspline / http://www.lab4games.net/zz85/blog
- *	@author centerionware / http://www.centerionware.com
- *
- *	Subdivision Geometry Modifier
- *		using Loop Subdivision Scheme
- *
- *	References:
- *		http://graphics.stanford.edu/~mdfisher/subdivision.html
- *		http://www.holmes3d.net/graphics/subdivision/
- *		http://www.cs.rutgers.edu/~decarlo/readings/subdiv-sg00c.pdf
- *
- *	Known Issues:
- *		- currently doesn't handle "Sharp Edges"
- */
-
-THREE.SubdivisionModifier = function ( subdivisions ) {
-
-	this.subdivisions = ( subdivisions === undefined ) ? 1 : subdivisions;
-
-};
-
-// Applies the "modify" pattern
-THREE.SubdivisionModifier.prototype.modify = function ( geometry ) {
-
-	if ( geometry.isBufferGeometry ) {
-
-		geometry = new THREE.Geometry().fromBufferGeometry( geometry );
-
-	} else {
-
-		geometry = geometry.clone();
-
-	}
-
-	geometry.mergeVertices();
-
-	var repeats = this.subdivisions;
-
-	while ( repeats -- > 0 ) {
-
-		this.smooth( geometry );
-
-	}
-
-	geometry.computeFaceNormals();
-	geometry.computeVertexNormals();
-
-	return geometry;
-
-};
-
-( function () {
-
-	// Some constants
-	var WARNINGS = ! true; // Set to true for development
-	var ABC = [ 'a', 'b', 'c' ];
-
-
-	function getEdge( a, b, map ) {
-
-		var vertexIndexA = Math.min( a, b );
-		var vertexIndexB = Math.max( a, b );
-
-		var key = vertexIndexA + "_" + vertexIndexB;
-
-		return map[ key ];
-
-	}
-
-
-	function processEdge( a, b, vertices, map, face, metaVertices ) {
-
-		var vertexIndexA = Math.min( a, b );
-		var vertexIndexB = Math.max( a, b );
-
-		var key = vertexIndexA + "_" + vertexIndexB;
-
-		var edge;
-
-		if ( key in map ) {
-
-			edge = map[ key ];
-
-		} else {
-
-			var vertexA = vertices[ vertexIndexA ];
-			var vertexB = vertices[ vertexIndexB ];
-
-			edge = {
-
-				a: vertexA, // pointer reference
-				b: vertexB,
-				newEdge: null,
-				// aIndex: a, // numbered reference
-				// bIndex: b,
-				faces: [] // pointers to face
-
-			};
-
-			map[ key ] = edge;
-
-		}
-
-		edge.faces.push( face );
-
-		metaVertices[ a ].edges.push( edge );
-		metaVertices[ b ].edges.push( edge );
-
-
-	}
-
-	function generateLookups( vertices, faces, metaVertices, edges ) {
-
-		var i, il, face;
-
-		for ( i = 0, il = vertices.length; i < il; i ++ ) {
-
-			metaVertices[ i ] = { edges: [] };
-
-		}
-
-		for ( i = 0, il = faces.length; i < il; i ++ ) {
-
-			face = faces[ i ];
-
-			processEdge( face.a, face.b, vertices, edges, face, metaVertices );
-			processEdge( face.b, face.c, vertices, edges, face, metaVertices );
-			processEdge( face.c, face.a, vertices, edges, face, metaVertices );
-
-		}
-
-	}
-
-	function newFace( newFaces, a, b, c, materialIndex ) {
-
-		newFaces.push( new THREE.Face3( a, b, c, undefined, undefined, materialIndex ) );
-
-	}
-
-	function midpoint( a, b ) {
-
-		return ( Math.abs( b - a ) / 2 ) + Math.min( a, b );
-
-	}
-
-	function newUv( newUvs, a, b, c ) {
-
-		newUvs.push( [ a.clone(), b.clone(), c.clone() ] );
-
-	}
-
-	/////////////////////////////
-
-	// Performs one iteration of Subdivision
-	THREE.SubdivisionModifier.prototype.smooth = function ( geometry ) {
-
-		var tmp = new THREE.Vector3();
-
-		var oldVertices, oldFaces, oldUvs;
-		var newVertices, newFaces, newUVs = [];
-
-		var n, i, il, j, k;
-		var metaVertices, sourceEdges;
-
-		// new stuff.
-		var sourceEdges, newEdgeVertices, newSourceVertices;
-
-		oldVertices = geometry.vertices; // { x, y, z}
-		oldFaces = geometry.faces; // { a: oldVertex1, b: oldVertex2, c: oldVertex3 }
-		oldUvs = geometry.faceVertexUvs[ 0 ];
-
-		var hasUvs = oldUvs !== undefined && oldUvs.length > 0;
-
-		/******************************************************
-		 *
-		 * Step 0: Preprocess Geometry to Generate edges Lookup
-		 *
-		 *******************************************************/
-
-		metaVertices = new Array( oldVertices.length );
-		sourceEdges = {}; // Edge => { oldVertex1, oldVertex2, faces[]  }
-
-		generateLookups( oldVertices, oldFaces, metaVertices, sourceEdges );
-
-
-		/******************************************************
-		 *
-		 *	Step 1.
-		 *	For each edge, create a new Edge Vertex,
-		 *	then position it.
-		 *
-		 *******************************************************/
-
-		newEdgeVertices = [];
-		var other, currentEdge, newEdge, face;
-		var edgeVertexWeight, adjacentVertexWeight, connectedFaces;
-
-		for ( i in sourceEdges ) {
-
-			currentEdge = sourceEdges[ i ];
-			newEdge = new THREE.Vector3();
-
-			edgeVertexWeight = 3 / 8;
-			adjacentVertexWeight = 1 / 8;
-
-			connectedFaces = currentEdge.faces.length;
-
-			// check how many linked faces. 2 should be correct.
-			if ( connectedFaces != 2 ) {
-
-				// if length is not 2, handle condition
-				edgeVertexWeight = 0.5;
-				adjacentVertexWeight = 0;
-
-				if ( connectedFaces != 1 ) {
-
-					if ( WARNINGS ) console.warn( 'Subdivision Modifier: Number of connected faces != 2, is: ', connectedFaces, currentEdge );
-
-				}
-
-			}
-
-			newEdge.addVectors( currentEdge.a, currentEdge.b ).multiplyScalar( edgeVertexWeight );
-
-			tmp.set( 0, 0, 0 );
-
-			for ( j = 0; j < connectedFaces; j ++ ) {
-
-				face = currentEdge.faces[ j ];
-
-				for ( k = 0; k < 3; k ++ ) {
-
-					other = oldVertices[ face[ ABC[ k ] ] ];
-					if ( other !== currentEdge.a && other !== currentEdge.b ) break;
-
-				}
-
-				tmp.add( other );
-
-			}
-
-			tmp.multiplyScalar( adjacentVertexWeight );
-			newEdge.add( tmp );
-
-			currentEdge.newEdge = newEdgeVertices.length;
-			newEdgeVertices.push( newEdge );
-
-			// console.log(currentEdge, newEdge);
-
-		}
-
-		/******************************************************
-		 *
-		 *	Step 2.
-		 *	Reposition each source vertices.
-		 *
-		 *******************************************************/
-
-		var beta, sourceVertexWeight, connectingVertexWeight;
-		var connectingEdge, connectingEdges, oldVertex, newSourceVertex;
-		newSourceVertices = [];
-
-		for ( i = 0, il = oldVertices.length; i < il; i ++ ) {
-
-			oldVertex = oldVertices[ i ];
-
-			// find all connecting edges (using lookupTable)
-			connectingEdges = metaVertices[ i ].edges;
-			n = connectingEdges.length;
-
-			if ( n == 3 ) {
-
-				beta = 3 / 16;
-
-			} else if ( n > 3 ) {
-
-				beta = 3 / ( 8 * n ); // Warren's modified formula
-
-			}
-
-			// Loop's original beta formula
-			// beta = 1 / n * ( 5/8 - Math.pow( 3/8 + 1/4 * Math.cos( 2 * Math. PI / n ), 2) );
-
-			sourceVertexWeight = 1 - n * beta;
-			connectingVertexWeight = beta;
-
-			if ( n <= 2 ) {
-
-				// crease and boundary rules
-				// console.warn('crease and boundary rules');
-
-				if ( n == 2 ) {
-
-					if ( WARNINGS ) console.warn( '2 connecting edges', connectingEdges );
-					sourceVertexWeight = 3 / 4;
-					connectingVertexWeight = 1 / 8;
-
-					// sourceVertexWeight = 1;
-					// connectingVertexWeight = 0;
-
-				} else if ( n == 1 ) {
-
-					if ( WARNINGS ) console.warn( 'only 1 connecting edge' );
-
-				} else if ( n == 0 ) {
-
-					if ( WARNINGS ) console.warn( '0 connecting edges' );
-
-				}
-
-			}
-
-			newSourceVertex = oldVertex.clone().multiplyScalar( sourceVertexWeight );
-
-			tmp.set( 0, 0, 0 );
-
-			for ( j = 0; j < n; j ++ ) {
-
-				connectingEdge = connectingEdges[ j ];
-				other = connectingEdge.a !== oldVertex ? connectingEdge.a : connectingEdge.b;
-				tmp.add( other );
-
-			}
-
-			tmp.multiplyScalar( connectingVertexWeight );
-			newSourceVertex.add( tmp );
-
-			newSourceVertices.push( newSourceVertex );
-
-		}
-
-
-		/******************************************************
-		 *
-		 *	Step 3.
-		 *	Generate Faces between source vertices
-		 *	and edge vertices.
-		 *
-		 *******************************************************/
-
-		newVertices = newSourceVertices.concat( newEdgeVertices );
-		var sl = newSourceVertices.length, edge1, edge2, edge3;
-		newFaces = [];
-
-		var uv, x0, x1, x2;
-		var x3 = new THREE.Vector2();
-		var x4 = new THREE.Vector2();
-		var x5 = new THREE.Vector2();
-
-		for ( i = 0, il = oldFaces.length; i < il; i ++ ) {
-
-			face = oldFaces[ i ];
-
-			// find the 3 new edges vertex of each old face
-
-			edge1 = getEdge( face.a, face.b, sourceEdges ).newEdge + sl;
-			edge2 = getEdge( face.b, face.c, sourceEdges ).newEdge + sl;
-			edge3 = getEdge( face.c, face.a, sourceEdges ).newEdge + sl;
-
-			// create 4 faces.
-
-			newFace( newFaces, edge1, edge2, edge3, face.materialIndex );
-			newFace( newFaces, face.a, edge1, edge3, face.materialIndex );
-			newFace( newFaces, face.b, edge2, edge1, face.materialIndex );
-			newFace( newFaces, face.c, edge3, edge2, face.materialIndex );
-
-			// create 4 new uv's
-
-			if ( hasUvs ) {
-
-				uv = oldUvs[ i ];
-
-				x0 = uv[ 0 ];
-				x1 = uv[ 1 ];
-				x2 = uv[ 2 ];
-
-				x3.set( midpoint( x0.x, x1.x ), midpoint( x0.y, x1.y ) );
-				x4.set( midpoint( x1.x, x2.x ), midpoint( x1.y, x2.y ) );
-				x5.set( midpoint( x0.x, x2.x ), midpoint( x0.y, x2.y ) );
-
-				newUv( newUVs, x3, x4, x5 );
-				newUv( newUVs, x0, x3, x5 );
-
-				newUv( newUVs, x1, x4, x3 );
-				newUv( newUVs, x2, x5, x4 );
-
-			}
-
-		}
-
-		// Overwrite old arrays
-		geometry.vertices = newVertices;
-		geometry.faces = newFaces;
-		if ( hasUvs ) geometry.faceVertexUvs[ 0 ] = newUVs;
-
-		// console.log('done');
-
-	};
-
-} )();
