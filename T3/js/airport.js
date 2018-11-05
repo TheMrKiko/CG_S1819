@@ -141,8 +141,9 @@ class Floor extends Object3D {
             color: 0x00ffff,
             wireframe: true
         };
-        var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 10, 1, 10);
-
+        var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 20, 1, 20);
+        floorGeometry.computeFaceNormals();
+        floorGeometry.computeVertexNormals();
         var floorMesh = new Mesh(floorGeometry, floorMaterial);
         floorMesh.receiveShadow = true;
         floorMesh.position.set(x, y, z);
@@ -174,7 +175,7 @@ class Plane extends Object3D {
         var bodyGeometry = new THREE.Geometry();
 
         var bodyMaterial = {
-            color: 0x696969,
+            color: 0xff3300,
             wireframe: true,
 			
         };
@@ -309,7 +310,7 @@ class Plane extends Object3D {
         }
 
         var wingMaterial = {
-        color: 0xff0000,
+        color: 0x006622,
         wireframe: true
         };
         var wingMesh = new Mesh(wingGeometry, wingMaterial);
@@ -331,7 +332,7 @@ class Plane extends Object3D {
         var stabilizerGeometry = new THREE.Geometry();
 
         var stabilizerMaterial = {
-            color: 0x0000ff,
+            color: 0x006622,
             wireframe: true
         };
         stabilizerGeometry.vertices.push(
@@ -369,7 +370,7 @@ class Plane extends Object3D {
         var stabilizerGeometry = new THREE.Geometry();
 
         var stabilizerMaterial = {
-            color: 0x0000ff,
+            color: 0x006622,
             wireframe: true
         };
     //horizontal
@@ -541,45 +542,37 @@ function createGlobalLight() {
 
     global_light = new THREE.DirectionalLight(0xffffff, 0.7);
     global_light.position.set(0, 1, 0);
-    global_light.lookAt(0,0,0);
+    global_light.lookAt(0, 0, 0);
     global_light.castShadow = true;
     //HELP WITH THE SHADOWS
-   global_light.shadow.camera.near = -60;
-   global_light.shadow.camera.far = 90;
-   global_light.shadow.camera.left= -90;
-   global_light.shadow.camera.right = 90;
-   global_light.shadow.camera.top= 90;
-   global_light.shadow.camera.bottom = -90;
+    global_light.shadow.camera.near = -60;
+    global_light.shadow.camera.far = 90;
+    global_light.shadow.camera.left= -90;
+    global_light.shadow.camera.right = 90;
+    global_light.shadow.camera.top= 90;
+    global_light.shadow.camera.bottom = -90;
 
-   global_light.shadow.mapSize.width = 4096;
-   global_light.shadow.mapSize.height = 4096;
-
-
-   
-    
-    scene.add( global_light );
-
-    //global_light.target.updateMatrixWorld();
-
-    //global_light.shadow.camera.near = 0.5;      
-    //global_light.shadow.camera.far = 25;     
+    global_light.shadow.mapSize.width = 4096;
+    global_light.shadow.mapSize.height = 4096;
+ 
+    scene.add(global_light);  
 }
 
 function createSpotLight() {
     "use strict";
 
     for (let i = 0; i < spotLight.length; i++) {
-        spotLight[i] = new THREE.SpotLight( 0xffffff, 1, 100, Math.PI/4);
+        spotLight[i] = new THREE.SpotLight( 0xffffff, 1, 100, Math.PI/4, 0, 1) ;
         //spotlights in lamps positions
         spotLight[i].position.set(lampsPos[i][0], LAMP_HEIGHT + 5, lampsPos[i][2]);
+        spotLight[i].target = plane;
         spotLight[i].castShadow = true;
-        spotLight[i].angle = Math.PI/10     
+        spotLight[i].angle = Math.PI/10;     
         spotLight[i].shadow.camera.near = 10;
         spotLight[i].shadow.camera.far = 200;
-        spotLight[i].shadow.mapSize.width = -1024;
-        spotLight[i].shadow.mapSize.height = 1024;
-        spotLight[i].target = plane;
-        scene.add( spotLight[i] );
+        spotLight[i].shadow.mapSize.width = 4096;
+        spotLight[i].shadow.mapSize.height = 4096;
+        scene.add(spotLight[i]);
     }
 }
     
@@ -702,10 +695,11 @@ function onKeyDown(e) {
         scene.traverse(function(node) {
             if (node instanceof Mesh) {
                 if (node.hasFlatMaterial){
+                    node.hasFlatMaterial = false;
                     node.material = node.lightMaterialsArray[node.previousIndex];
                 } else {
-                    node.material = node.flatMaterial;
                     node.hasFlatMaterial = true;
+                    node.material = node.flatMaterial;
                 }
             }
         });          
@@ -780,8 +774,7 @@ function render() {
     "use strict";
 
     renderer.render(scene, camera);
-    //renderer.shadowMap.enabled = true;
-    //renderer.shadowMap.type = THREE.PCFShadowMap;
+
 }
 
 
