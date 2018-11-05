@@ -18,8 +18,48 @@ var lampsPos = [[DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
                 [-DISTANCE_LAMPS, 0, DISTANCE_LAMPS],
                 [DISTANCE_LAMPS, 0, -DISTANCE_LAMPS],
                 [-DISTANCE_LAMPS, 0, -DISTANCE_LAMPS]];
-
+const smallerThan = (A, B) => A < B ? 1 : -1
 const midpoint = (A, B, C) => new THREE.Vector3((A.x + B.x + C.x) / 3, (A.y + B.y + C.y) / 3, (A.z + B.z + C.z) / 3)
+const midNpoint = (A, B, m, n) => new THREE.Vector3(midNpointAux(A.x, B.x, m, n), midNpointAux(A.y, B.y, m, n), midNpointAux(A.z, B.z, m, n))
+const midNpointAux = (aw, bw, m, n) => aw + (Math.abs(aw - bw) * n * smallerThan(aw, bw)) / m
+
+function pushSegmentedFace2(geo, a, b, c, levels) {
+    var va = geo.vertices[a], vb = geo.vertices[b], vc = geo.vertices[c];
+    var l = geo.vertices.length
+    for (var it = 0; it != levels + 1; it ++) {
+        var topStartI = l + (it * (it + 1) / 2) - 1
+        var topStartI_r = it ? topStartI : a
+        var bottomStartV = (levels - it) ? midNpoint(va, vb, levels + 1, it + 1) : vb
+        var bottomEndV = (levels - it) ? midNpoint(va, vc, levels + 1, it + 1) : vc
+        var bottomStartI = geo.vertices.length
+        var bottomStartI_r = it - levels ? bottomStartI : b
+        console.log("it", it, "t b", topStartI, bottomStartI, "t b", bottomStartV, bottomEndV)
+        geo.vertices.push(bottomStartV)
+        for (var mvs = 1; mvs != it + 1; mvs ++) {
+           console.log(mvs)
+            geo.vertices.push(midNpoint(bottomStartV, bottomEndV, it + 1, mvs))
+        }
+        geo.vertices.push(bottomEndV)
+        for (var tr = 0; tr != it * 2 + 1; tr ++) {
+            var auxPrim, auxSec, auxTer
+            var inc = 0;
+            if (tr % 2 == 0) {
+                auxPrim = tr ? topStartI + inc + 1 : topStartI_r
+                auxSec = (tr) ? bottomStartI + inc + 1: bottomStartI_r
+                auxTer = (it - levels) || (tr - it * 2) ? bottomStartI + inc + 1 : c
+                inc++
+            } else {
+                auxPrim = topStartI
+                auxSec = bottomStartI + 1
+                auxTer = topStartI + 1
+                
+            }
+            console.log(auxPrim, auxSec, auxTer)
+            console.log(geo.vertices[auxPrim], geo.vertices[auxSec], geo.vertices[auxTer])
+            geo.faces.push(new THREE.Face3(auxPrim, auxSec, auxTer));
+        }
+    }
+}
 
 function pushSegmentedFace(geo, a, b, c, level) {
     if (level) {
@@ -143,7 +183,7 @@ class Plane extends Object3D {
 
         const l = 0
         //uma parede
-        pushSegmentedFace(bodyGeometry, 0, 1, 2, l);
+        pushSegmentedFace2(bodyGeometry, 0, 1, 2, 1);
         pushSegmentedFace(bodyGeometry, 0, 3, 4, l);
         pushSegmentedFace(bodyGeometry, 0, 4, 1, l);
         //outra parede
