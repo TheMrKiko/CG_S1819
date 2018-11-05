@@ -114,6 +114,18 @@ class Object3D extends THREE.Object3D {
     }
 }
 
+class Mesh extends THREE.Mesh {
+    constructor(geometry, materialOpts) {
+        var materialsArray = [new THREE.MeshPhongMaterial(materialOpts), new THREE.MeshLambertMaterial(materialOpts), new THREE.MeshBasicMaterial(materialOpts)]
+        super(geometry, materialsArray[0]);
+        this.materialsArray = materialsArray;
+        this.lightMaterialIndex = 0;
+        this.lightMaterialsArray = [materialsArray[0], materialsArray[1]];
+        this.flatMaterial = materialsArray[2];
+        return this;
+    }
+}
+
 class Floor extends Object3D {
     constructor(x, y, z) {
         super();
@@ -127,13 +139,13 @@ class Floor extends Object3D {
     addFloor(x,y,z) {
         "use strict";
     
-        var floorMaterial = new THREE.MeshPhongMaterial({
+        var floorMaterial = {
             color: 0x00ffff,
             wireframe: true
-        });
+        };
         var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 10, 1, 10);
 
-        var floorMesh = new THREE.Mesh(floorGeometry, floorMaterial);
+        var floorMesh = new Mesh(floorGeometry, floorMaterial);
         floorMesh.receiveShadow = true;
         floorMesh.position.set(x, y, z);
         this.add(floorMesh);
@@ -164,11 +176,11 @@ class Plane extends Object3D {
         var bodyGeometry = new THREE.Geometry();
         
 
-        var bodyMaterial = new THREE.MeshPhongMaterial({
+        var bodyMaterial = {
             color: 0x696969,
             wireframe: true,
 			
-        });
+        };
 
         bodyGeometry.vertices.push(
             new THREE.Vector3(0, 0, -2.5),
@@ -205,10 +217,9 @@ class Plane extends Object3D {
         //parte de baixo
         pushSegmentedFace(bodyGeometry, 2, 8, 3, l);
         pushSegmentedFace(bodyGeometry, 2, 7, 8, l);
-        
-        
-        var bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        
+
+        var bodyMesh = new Mesh(bodyGeometry, bodyMaterial);
+
         bodyMesh.position.set(x, y, z + 5);
         bodyGeometry.computeFaceNormals();
         bodyGeometry.computeVertexNormals();
@@ -221,11 +232,11 @@ class Plane extends Object3D {
         var modifier = new THREE.SubdivisionModifier(4);
         var cockpitGeometry = new THREE.Geometry();
 
-        var cockpitMaterial = new THREE.MeshPhongMaterial({
+        var cockpitMaterial = {
             color: 	0x48d1ff,
             wireframe: true,
 			
-        });
+        };
         cockpitGeometry.vertices.push(
             new THREE.Vector3(-2.5, 5,0),
             new THREE.Vector3(-2.5, 3.5 ,4.5),
@@ -243,8 +254,8 @@ class Plane extends Object3D {
         cockpitGeometry.faces.push( new THREE.Face3(2, 1, 5));
         cockpitGeometry.faces.push( new THREE.Face3(0, 4, 1));
         cockpitGeometry.faces.push( new THREE.Face3(3, 5, 1));
-      
-        var cockpitMesh = new THREE.Mesh(cockpitGeometry, cockpitMaterial);
+
+        var cockpitMesh = new Mesh(cockpitGeometry, cockpitMaterial);
         cockpitMesh.position.set(x, y, z+5);
         cockpitGeometry.computeFaceNormals();
         cockpitGeometry.computeVertexNormals();
@@ -303,12 +314,12 @@ class Plane extends Object3D {
             wingGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
         }
 
-        var wingMaterial = new THREE.MeshPhongMaterial({
+        var wingMaterial = {
         color: 0xff0000,
         wireframe: true
-        });
-        
-        var wingMesh = new THREE.Mesh(wingGeometry, wingMaterial);
+        };
+    
+        var wingMesh = new Mesh(wingGeometry, wingMaterial);
         
         scaleMesh(wingMesh, scalefactor);
 
@@ -326,10 +337,10 @@ class Plane extends Object3D {
 
         var stabilizerGeometry = new THREE.Geometry();
 
-        var stabilizerMaterial = new THREE.MeshPhongMaterial({
+        var stabilizerMaterial = {
             color: 0x0000ff,
             wireframe: true
-        });
+        };
         stabilizerGeometry.vertices.push(
             // vertical stabilizer
             new THREE.Vector3(0, 0, 0),
@@ -350,7 +361,7 @@ class Plane extends Object3D {
         stabilizerGeometry.faces.push(new THREE.Face3(1, 5, 2));
         stabilizerGeometry.faces.push(new THREE.Face3(4, 5, 1));
 
-        var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
+        var stabilizerMesh = new Mesh(stabilizerGeometry, stabilizerMaterial);
         stabilizerMesh.castShadow = true;
         stabilizerGeometry.computeFaceNormals();
         stabilizerGeometry.computeVertexNormals();
@@ -364,10 +375,10 @@ class Plane extends Object3D {
 
         var stabilizerGeometry = new THREE.Geometry();
 
-        var stabilizerMaterial = new THREE.MeshPhongMaterial({
+        var stabilizerMaterial = {
             color: 0x0000ff,
             wireframe: true
-        });
+        };
     //horizontal
     // horizontal stabilizers
         stabilizerGeometry.vertices.push(
@@ -415,7 +426,7 @@ class Plane extends Object3D {
             stabilizerGeometry.faces.push( new THREE.Face3(v1 + 8, v3 + 8, v2 + 8));
         }
 
-        var stabilizerMesh = new THREE.Mesh(stabilizerGeometry, stabilizerMaterial);
+        var stabilizerMesh = new Mesh(stabilizerGeometry, stabilizerMaterial);
         
         scaleMesh(stabilizerMesh, scalefactor);
 
@@ -450,13 +461,13 @@ class Lamp extends Object3D {
     addBase(x, y, z) {
         "use strict";
 
-        var baseMaterial = new THREE.MeshPhongMaterial({
+        var baseMaterial = {
             color: 0x696969,
             wireframe: true
-        });
+        };
         var baseGeometry = new THREE.CylinderGeometry(LAMP_BASE_RADIUS, LAMP_BASE_RADIUS, 0.5, 20);
 
-        var baseMesh = new THREE.Mesh(baseGeometry, baseMaterial);
+        var baseMesh = new Mesh(baseGeometry, baseMaterial);
 
         baseGeometry.computeFaceNormals();
         baseGeometry.computeVertexNormals();
@@ -469,13 +480,13 @@ class Lamp extends Object3D {
     addTube(x, y, z) {
         "use strict";
 
-        var tubeMaterial = new THREE.MeshPhongMaterial({
+        var tubeMaterial = {
             color: 	0x696969,
             wireframe: true
-        });
+        };
         var tubeGeometry = new THREE.CylinderGeometry(0.5, 0.5, LAMP_HEIGHT, 15);
 
-        var tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
+        var tubeMesh = new Mesh(tubeGeometry, tubeMaterial);
 
         tubeMesh.position.set(x, y + 7, z);
         this.add(tubeMesh);
@@ -492,7 +503,7 @@ class Lamp extends Object3D {
         });
         var refletorGeometry = new THREE.CylinderGeometry(1, 3, 5, 15, 1, true, 0, Math.PI * 2);
 
-        var refletorMesh = new THREE.Mesh(refletorGeometry, refletorMaterial);
+        var refletorMesh = new Mesh(refletorGeometry, refletorMaterial);
 
         refletorMesh.position.set(x, y + 2.5, z);
         this.add(refletorMesh);
@@ -501,13 +512,13 @@ class Lamp extends Object3D {
     addHolder(x, y, z) {
         "use strict";
 
-        var holderMaterial = new THREE.MeshPhongMaterial({
+        var holderMaterial = {
             color: 0xffff1a,
             wireframe: true
-        });
+        };
         var holderGeometry = new THREE.CylinderGeometry(0.7, 0.1, 0.5, 15);
 
-        var holderMesh = new THREE.Mesh(holderGeometry, holderMaterial);
+        var holderMesh = new Mesh(holderGeometry, holderMaterial);
 
         holderMesh.position.set(x, y + 0.25, z);
         this.add(holderMesh);
@@ -516,13 +527,13 @@ class Lamp extends Object3D {
     addLamp(x, y, z) {
         "use strict";
 
-        var lampMaterial = new THREE.MeshPhongMaterial({
+        var lampMaterial = {
             color: 0xffff1a,
             wireframe: true
-        });
+        };
         var lampGeometry = new THREE.SphereGeometry(2, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
 
-        var lampMesh = new THREE.Mesh(lampGeometry, lampMaterial);
+        var lampMesh = new Mesh(lampGeometry, lampMaterial);
        
         lampGeometry.computeFaceNormals();
         lampGeometry.computeVertexNormals();
@@ -657,8 +668,9 @@ function onKeyDown(e) {
         case 65: //A
         case 97: //a
         scene.traverse(function(node) {
-            if (node instanceof THREE.Mesh) {
-                node.material.wireframe = !node.material.wireframe;
+            if (node instanceof Mesh) {
+                for (var material in node.materialsArray)
+                    node.materialsArray[material].wireframe = !node.materialsArray[material].wireframe;
             }
         });
         break;
@@ -674,6 +686,23 @@ function onKeyDown(e) {
         case 110://n 
         global_light_switcher();
         
+        break;
+        case 71://G
+        case 104://g 
+        scene.traverse(function(node) {
+            if (node instanceof Mesh) {
+                node.lightMaterialIndex = Math.abs(node.lightMaterialIndex - 1)
+                node.material = node.lightMaterialsArray[node.lightMaterialIndex];
+            }
+        });        
+        break;
+        case 76://L
+        case 108://l 
+        scene.traverse(function(node) {
+            if (node instanceof Mesh) {
+                node.material = node.flatMaterial;
+            }
+        });          
         break;
 
         case 49:
