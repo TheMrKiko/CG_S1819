@@ -82,9 +82,9 @@ function updateVerticesDistanceAndScale(array, distance, scalefactor) {
 function scaleMesh(mesh, scalefactor) {
     var m = new THREE.Matrix4();
         m.set(scalefactor, 0, 0, 0,
-                0,scalefactor,0,0,
-                0,0,scalefactor,0,
-                0,0,0,1)
+                0, scalefactor, 0, 0,
+                0, 0, scalefactor, 0,
+                0, 0, 0, 1)
     mesh.applyMatrix(m);
 }
 
@@ -138,7 +138,7 @@ class Floor extends Object3D {
         "use strict";
     
         var floorMaterial = {
-            color: 0x00ffff,
+            color: 0xc41d5a,
             wireframe: true
         };
         var floorGeometry = new THREE.BoxGeometry(2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 0.5, 2 + (DISTANCE_LAMPS + LAMP_BASE_RADIUS) * 2, 20, 1, 20);
@@ -194,27 +194,27 @@ class Plane extends Object3D {
             new THREE.Vector3(-25, 5, 2.5)
         );
 
-        const l = 0
+        const l = 3
         //uma parede
-        pushSegmentedFace2(bodyGeometry, 0, 1, 2, 4);
-        pushSegmentedFace(bodyGeometry, 0, 3, 4, l);
-        pushSegmentedFace(bodyGeometry, 0, 4, 1, l);
+        pushSegmentedFace2(bodyGeometry, 0, 1, 2, l);
+        pushSegmentedFace2(bodyGeometry, 0, 3, 4, l);
+        pushSegmentedFace2(bodyGeometry, 0, 4, 1, l);
         //outra parede
-        pushSegmentedFace(bodyGeometry, 7, 6, 5, l);
-        pushSegmentedFace(bodyGeometry, 9, 8, 5, l);
-        pushSegmentedFace(bodyGeometry, 6, 9, 5, l);
+        pushSegmentedFace2(bodyGeometry, 7, 6, 5, l);
+        pushSegmentedFace2(bodyGeometry, 9, 8, 5, l);
+        pushSegmentedFace2(bodyGeometry, 6, 9, 5, l);
         //parte da frente
-        pushSegmentedFace(bodyGeometry, 2, 1, 6, l);
-        pushSegmentedFace(bodyGeometry, 2, 6, 7, l);
+        pushSegmentedFace2(bodyGeometry, 2, 1, 6, l);
+        pushSegmentedFace2(bodyGeometry, 2, 6, 7, l);
         //parte de cima
-        pushSegmentedFace(bodyGeometry, 1, 4, 9, l);
-        pushSegmentedFace(bodyGeometry, 1, 9, 6, l);
+        pushSegmentedFace2(bodyGeometry, 1, 4, 9, l);
+        pushSegmentedFace2(bodyGeometry, 1, 9, 6, l);
         //parte de tras
-        pushSegmentedFace(bodyGeometry, 4, 3, 8, l);
-        pushSegmentedFace(bodyGeometry, 4, 8, 9, l);
+        pushSegmentedFace2(bodyGeometry, 4, 3, 8, l);
+        pushSegmentedFace2(bodyGeometry, 4, 8, 9, l);
         //parte de baixo
-        pushSegmentedFace(bodyGeometry, 2, 8, 3, l);
-        pushSegmentedFace(bodyGeometry, 2, 7, 8, l);
+        pushSegmentedFace2(bodyGeometry, 2, 8, 3, l);
+        pushSegmentedFace2(bodyGeometry, 2, 7, 8, l);
 
         var bodyMesh = new Mesh(bodyGeometry, bodyMaterial);
 
@@ -300,8 +300,9 @@ class Plane extends Object3D {
         wingGeometry.faces.push( new THREE.Face3(B, UP_A, UP_C));
         wingGeometry.faces.push( new THREE.Face3(B, UP_C, C));
 
+        
         //WING2
-        var len = wingGeometry.faces.length;
+       var len = wingGeometry.faces.length;
         for (var i = 0; i < len; i++) {
             var v1 = wingGeometry.faces[i]["a"];
             var v2 = wingGeometry.faces[i]["b"];
@@ -523,7 +524,9 @@ class Lamp extends Object3D {
 
         var lampMaterial = {
             color: 0xffff1a,
-            wireframe: true
+            wireframe: true,
+            opacity: 0.8,
+			transparent: true
         };
         var lampGeometry = new THREE.SphereGeometry(2, 8, 6, 0, Math.PI * 2, 0, Math.PI/2);
 
@@ -686,7 +689,8 @@ function onKeyDown(e) {
             if (node instanceof Mesh) {
                 node.previousIndex = node.lightMaterialIndex;
                 node.lightMaterialIndex = Math.abs(node.lightMaterialIndex - 1)
-                node.material = node.lightMaterialsArray[node.lightMaterialIndex];
+                if (!node.hasFlatMaterial)
+                    node.material = node.lightMaterialsArray[node.lightMaterialIndex];
             }
         });        
         break;
@@ -790,7 +794,7 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createPerspectiveCamera(50, 50, 50);
+    createPerspectiveCamera(50 - 20, 50, 50 + 10);
     createLight();
     
     render();
