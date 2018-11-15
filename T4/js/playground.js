@@ -54,7 +54,7 @@ class Chess extends Object3D {
             transparent: true,
             map: ballTexture
         });*/
-        var tableGeometry = new THREE.BoxGeometry(50, 2, 50, 10, 1, 10);
+        var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE, 10, 1, 10);
 
         tableGeometry.computeFaceNormals();
         tableGeometry.computeVertexNormals();
