@@ -6,6 +6,8 @@ const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
 const BALL_RADIUS = 5;
 const BALL_ROTATION_RADIUS = 20;
+const BALL_ACCELERATION = 1;
+const BALL_VELOCITY_LIMIT = 2;
 const FLOOR_SIZE = 75;
  
 const ANGULAR_VELOCITY = Math.PI / 96;
@@ -18,8 +20,8 @@ class Object3D extends THREE.Object3D {
 
     constructor() {
         super();
-        this.velocity = new THREE.Vector3();
-        this.acceleration = new THREE.Vector3();
+        this.velocity = 0;
+        this.acceleration = 0;
     }
 
     animate(_) {
@@ -71,8 +73,9 @@ class Ball extends Object3D {
 
         this.addBall(0, 0, 0);
         this.add(new THREE.AxesHelper(BALL_RADIUS));
-        this.angularVelocity = 1;
-        this.acceleration = 0;
+        
+        this.angularVelocity = 0;
+        this.acceleration = BALL_ACCELERATION;
         this.angle = 0;
         //this.velocity = new THREE.Vector3(0, 0, Math.random() + 10);
         this.position.set(x, y + BALL_RADIUS, z);
@@ -113,40 +116,25 @@ class Ball extends Object3D {
     }
 
     animate(timeDiff) {
-        "use strict"; 
-        /*
-        var clonedAcceleration = this.acceleration.clone()
-        var oldVelocity = this.velocity.clone();
-        var tiltedVelocity;
-        this.angle += this.angularVelocity * timeDiff;
-        
-        this.velocity.add(clonedAcceleration.multiplyScalar(timeDiff));
+        "use strict";        
 
-        tiltedVelocity = this.velocity.clone()
-        
-        tiltedVelocity.applyAxisAngle(Y_AXIS, this.angle)s;
-        if (this.friction && this.velocity.z * oldVelocity.z <= 0) {
-            this.friction = false;
-            this.acceleration = new THREE.Vector3();
-            this.velocity = new THREE.Vector3( );
-        } else {
-            this.position.add(tiltedVelocity.multiplyScalar(timeDiff));
-        }*/
-        
-        this.angle += this.angularVelocity * timeDiff;
-        this.rotateY(-1 * this.angularVelocity * timeDiff);
-        this.getObjectByName("BallMesh").rotateX(timeDiff * 2 / BALL_RADIUS);
+        if (this.acceleration < 0 || this.velocity < BALL_VELOCITY_LIMIT) {
+            this.velocity += this.acceleration * timeDiff;
+
+        } if (this.velocity < 0) {
+            this.velocity = 0;
+        }
+        this.angularVelocity = this.velocity;
+        var angleDiff = this.angularVelocity * timeDiff;
+        this.angle += angleDiff;
+
+        this.rotateY(-1 * angleDiff);
+        this.getObjectByName("BallMesh").rotateX(angleDiff * 5 / BALL_RADIUS);
+
         this.position.x = BALL_ROTATION_RADIUS * Math.cos(this.angle);
         this.position.z = BALL_ROTATION_RADIUS * Math.sin(this.angle);
-
-        //this.setRotationFromAxisAngle(Y_AXIS, this.angle);
-
-
-
     }
-    
 }
-
 
 function createOrtographicCamera(index, x, y, z) {
     "use strict";
@@ -256,6 +244,14 @@ function onKeyDown(e) {
         scene.traverse(function(node) {
             if (node instanceof THREE.Mesh) {
                 node.material.wireframe = !node.material.wireframe;
+            }
+        });
+        break;
+        case 66: //B
+        case 98: //b
+        scene.traverse(function(node) {
+            if (node instanceof Ball) {
+                node.acceleration = -node.acceleration;
             }
         });
         break;
