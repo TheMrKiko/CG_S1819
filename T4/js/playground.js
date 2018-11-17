@@ -1,6 +1,10 @@
 var scene, renderer, clock;
 var cameras = new Array(2);
 var activeCamera = 0;
+var dir_light;
+var point_light;
+
+
 
 const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
@@ -29,6 +33,18 @@ class Object3D extends THREE.Object3D {
 
 }
 
+class Mesh extends THREE.Mesh {
+    constructor(geometry, materialOpts) {
+        var materialsArray = [new THREE.MeshPhongMaterial(materialOpts),new THREE.MeshBasicMaterial(materialOpts)]
+        super(geometry, materialsArray[0]);
+        this.materialsArray = materialsArray;
+        this.hasFlatMaterial = false;
+        this.lightMaterial = [materialsArray[0], materialsArray[1]];
+        this.flatMaterial = materialsArray[1];
+        return this;
+    }
+}
+
 class Chess extends Object3D {
     constructor(x, y, z) {
         super();
@@ -50,12 +66,12 @@ class Chess extends Object3D {
             map: tableTexture
         });
 
-        /*var tableMaterial = new THREE.MeshPhongMaterial({
+        var tableMaterial = new THREE.MeshPhongMaterial({
             wireframe: true,
             opacity: 1,
             transparent: true,
-            map: ballTexture
-        });*/
+            map: tableTexture
+        });
         var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE, 10, 1, 10);
 
         tableGeometry.computeFaceNormals();
@@ -87,7 +103,7 @@ class Ball extends Object3D {
         var ballTexture = new THREE.TextureLoader().load('./assets/ball_13_texture.jpg');
         ballTexture.wrapS = ballTexture.wrapT = THREE.ClampToEdgeWrapping;
         
-        /*var ballMaterial = new THREE.MeshPhongMaterial({
+        var ballMaterial = new THREE.MeshPhongMaterial({
             wireframe: true,
             opacity: 1,
             transparent: true,
@@ -95,7 +111,7 @@ class Ball extends Object3D {
             shininess: 50,
             specular: 0xffffff
 
-        });*/
+        });
         
         var ballMaterial = new THREE.MeshBasicMaterial({
             //color: eval('0x'+Math.floor(Math.random() * 16777215).toString(16)),
@@ -115,6 +131,7 @@ class Ball extends Object3D {
         this.add(ballMesh);
     }
 
+   
     animate(timeDiff) {
         "use strict";        
 
@@ -134,6 +151,37 @@ class Ball extends Object3D {
         this.position.x = BALL_ROTATION_RADIUS * Math.cos(this.angle);
         this.position.z = BALL_ROTATION_RADIUS * Math.sin(this.angle);
     }
+}
+
+function createDirLight() {
+    "use strict";
+
+    dir_light = new THREE.DirectionalLight(0xffffff, 0.7);
+    dir_light.position.set(0, 1, 0.5);
+    dir_light.lookAt(0, 1, 0.5);
+    dir_light.castShadow = true;
+   
+    dir_light.shadow.camera.near = -60;
+    dir_light.shadow.camera.far = 90;
+    dir_light.shadow.camera.left= -90;
+    dir_light.shadow.camera.right = 90;
+    dir_light.shadow.camera.top= 90;
+    dir_light.shadow.camera.bottom = -90;
+
+    dir_light.shadow.mapSize.width = 4096;
+    dir_light.shadow.mapSize.height = 4096;
+ 
+    scene.add(dir_light);  
+}
+
+function createPointLight() {
+
+	point_light = new THREE.PointLight(0xffffff, 30, 120, 2);
+
+	point_light.position.set(0, 1, 0.5);
+	point_light.castShadow = true;
+	scene.add(point_light);
+
 }
 
 function createOrtographicCamera(index, x, y, z) {
@@ -223,6 +271,14 @@ function resizeCameraPerspective(index) {
     
 }
 
+function dir_light_switcher() {
+	dir_light.visible = !dir_light.visible;
+}
+
+function point_light_switcher() {
+	point_light.visible = !point_light.visible;
+}
+
 function switchCamera(index) {
     "use strict";
     
@@ -239,8 +295,16 @@ function onKeyDown(e) {
         case 50: //2
         switchCamera(1);
         break;
-        case 65: //A
-        case 97: //a
+        case 68://D
+        case 100://d 
+        dir_light_switcher();
+        break;
+        case 80://P
+        case 112://p 
+        point_light_switcher();
+        break;
+        case 87: //W
+        case 119: //w
         scene.traverse(function(node) {
             if (node instanceof THREE.Mesh) {
                 node.material.wireframe = !node.material.wireframe;
@@ -254,6 +318,20 @@ function onKeyDown(e) {
                 node.acceleration = -node.acceleration;
             }
         });
+        break;
+        case 76://L
+        case 108://l 
+        scene.traverse(function(node) {
+            if (node instanceof Mesh) {
+                if (node.hasFlatMaterial){
+                    node.hasFlatMaterial = false;
+                    node.material = node.lightMaterial;
+                } else {
+                    node.hasFlatMaterial = true;
+                    node.material = node.flatMaterial;
+                }
+            }
+        });          
         break;
         case 69: //E
         case 101: //e
@@ -277,6 +355,11 @@ function createScene() {
     scene.add(new Ball(0, 0, 0));
 }
 
+function createLights(){
+    createDirLight();
+    createPointLight();
+}
+
 function render() {
     "use strict";
     
@@ -295,7 +378,7 @@ function init() {
     createScene();
     createPerspectiveCamera(0, 0, 20, 30);
     createOrtographicCamera(1, 0, 20, 0);
-
+    createLights();
     render();
 
     window.addEventListener("keydown", onKeyDown);
