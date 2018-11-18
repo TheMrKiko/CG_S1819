@@ -147,6 +147,7 @@ class Ball extends Object3D {
 
         var angleDiff = this.velocity * timeDiff;
         this.angle += angleDiff;
+        this.angle %= 2 * Math.PI;
 
         this.rotateY(-1 * angleDiff);
         this.getObjectByName("BallMesh").rotateX(angleDiff * 5 / BALL_RADIUS);
@@ -183,7 +184,7 @@ class Cube extends Object3D {
             cubeLoader.load('./assets/cube_5.png'),
             cubeLoader.load('./assets/cube_6.png')];
         
-        var cubeBumpMap = cubeLoader.load('./assets/cube_5.png');
+        var cubeBumpMap = cubeLoader.load('./assets/cube_bump.png');
         var cubePhongMaterials = cubeTextures.map(
             function(texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -192,6 +193,7 @@ class Cube extends Object3D {
                     wireframe: false,
                     map: texture,
                     bumpMap: cubeBumpMap,
+                    bumpScale: 0.5,
                     shininess: 50, 
                     specular: 0xffffff
                 }
