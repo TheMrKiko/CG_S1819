@@ -11,10 +11,9 @@ const PLANE_HEIGHT = 55;
 const BALL_RADIUS = 5;
 const BALL_ROTATION_RADIUS = 20;
 const BALL_ACCELERATION = 1;
-const BALL_VELOCITY_LIMIT = 2;
+const BALL_VELOCITY_LIMIT = Math.PI * 2;
+const CUBE_SIDE = 10;
 const FLOOR_SIZE = 75;
- 
-const ANGULAR_VELOCITY = Math.PI / 96;
 
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
@@ -34,13 +33,20 @@ class Object3D extends THREE.Object3D {
 }
 
 class Mesh extends THREE.Mesh {
-    constructor(geometry, materialOpts) {
-        var materialsArray = [new THREE.MeshPhongMaterial(materialOpts),new THREE.MeshBasicMaterial(materialOpts)]
+    constructor(geometry, phongMaterialOpts, basicMaterialOpts) {
+        var phongMaterial, basicMaterial, materialsArray;
+        if (Array.isArray(phongMaterialOpts) && Array.isArray(basicMaterialOpts)) {
+            phongMaterial = phongMaterialOpts.map((ops) => new THREE.MeshPhongMaterial(ops));
+            basicMaterial = basicMaterialOpts.map((ops) => new THREE.MeshBasicMaterial(ops));
+        } else {
+            phongMaterial = new THREE.MeshPhongMaterial(phongMaterialOpts);
+            basicMaterial = new THREE.MeshBasicMaterial(basicMaterialOpts);
+        }
+        var materialsArray = [phongMaterial, basicMaterial];
+
         super(geometry, materialsArray[0]);
         this.materialsArray = materialsArray;
-        this.hasFlatMaterial = false;
-        this.lightMaterial = [materialsArray[0], materialsArray[1]];
-        this.flatMaterial = materialsArray[1];
+        this.materialIndex = 0;
         return this;
     }
 }
@@ -58,26 +64,26 @@ class Chess extends Object3D {
 
         var tableTexture = new THREE.TextureLoader().load('./assets/chess_texture.jpg');
         tableTexture.wrapS = tableTexture.wrapT = THREE.RepeatWrapping;
-        tableTexture.repeat.set( 2, 2 );
+        tableTexture.repeat.set(2, 2);
 
-        var tableMaterial = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            wireframe: true,
-            map: tableTexture
-        });
-
-        var tableMaterial = new THREE.MeshPhongMaterial({
-            wireframe: true,
-            opacity: 1,
-            transparent: true,
-            map: tableTexture
-        });
         var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE, 10, 1, 10);
 
         tableGeometry.computeFaceNormals();
         tableGeometry.computeVertexNormals();
 
-        var tableMesh = new THREE.Mesh(tableGeometry, tableMaterial);
+        var tableMesh = new Mesh(tableGeometry,
+            {
+                wireframe: false,
+                opacity: 1,
+                transparent: true,
+                map: tableTexture
+            },
+            {
+                color: 0xffffff,
+                wireframe: false,
+                map: tableTexture
+            }
+        );
         tableMesh.position.set(x, y - 0.5, z);
         this.add(tableMesh);
     }
@@ -90,10 +96,9 @@ class Ball extends Object3D {
         this.addBall(0, 0, 0);
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         
-        this.angularVelocity = 0;
         this.acceleration = BALL_ACCELERATION;
         this.angle = 0;
-        //this.velocity = new THREE.Vector3(0, 0, Math.random() + 10);
+        this.velocity = Math.random() * BALL_VELOCITY_LIMIT;
         this.position.set(x, y + BALL_RADIUS, z);
     }
 
@@ -103,46 +108,44 @@ class Ball extends Object3D {
         var ballTexture = new THREE.TextureLoader().load('./assets/ball_13_texture.jpg');
         ballTexture.wrapS = ballTexture.wrapT = THREE.ClampToEdgeWrapping;
         
-        var ballMaterial = new THREE.MeshPhongMaterial({
-            wireframe: true,
-            opacity: 1,
-            transparent: true,
-            map: ballTexture,
-            shininess: 50,
-            specular: 0xffffff
-
-        });
-        
-        var ballMaterial = new THREE.MeshBasicMaterial({
-            //color: eval('0x'+Math.floor(Math.random() * 16777215).toString(16)),
-            wireframe: true,
-            opacity: 1,
-            transparent: true,
-            map: ballTexture
-        });
         var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 10, 10);
 
         ballGeometry.computeFaceNormals();
         ballGeometry.computeVertexNormals();
 
-        var ballMesh = new THREE.Mesh(ballGeometry, ballMaterial);
+        var ballMesh = new Mesh(ballGeometry,
+            {
+                wireframe: false,
+                opacity: 1,
+                transparent: true,
+                map: ballTexture,
+                shininess: 50,
+                specular: 0xffffff
+            },
+            {
+                wireframe: false,
+                opacity: 1,
+                transparent: true,
+                map: ballTexture
+            }
+        );
         ballMesh.name = "BallMesh";
         ballMesh.position.set(x, y, z);
         this.add(ballMesh);
     }
-
    
     animate(timeDiff) {
         "use strict";        
 
-        if (this.acceleration < 0 || this.velocity < BALL_VELOCITY_LIMIT) {
-            this.velocity += this.acceleration * timeDiff;
+        this.velocity += this.acceleration * timeDiff;
 
-        } if (this.velocity < 0) {
+        if (this.velocity > BALL_VELOCITY_LIMIT) {
+            this.velocity = BALL_VELOCITY_LIMIT;
+        } else if (this.velocity < 0) {
             this.velocity = 0;
         }
-        this.angularVelocity = this.velocity;
-        var angleDiff = this.angularVelocity * timeDiff;
+
+        var angleDiff = this.velocity * timeDiff;
         this.angle += angleDiff;
 
         this.rotateY(-1 * angleDiff);
@@ -150,6 +153,61 @@ class Ball extends Object3D {
 
         this.position.x = BALL_ROTATION_RADIUS * Math.cos(this.angle);
         this.position.z = BALL_ROTATION_RADIUS * Math.sin(this.angle);
+    }
+}
+
+class Cube extends Object3D {
+    constructor(x, y, z) {
+        super();
+
+        this.addCube(0, 0, 0);
+        this.add(new THREE.AxesHelper(CUBE_SIDE));
+        
+        this.position.set(x, y + CUBE_SIDE / 2, z);
+    }
+    
+    addCube(x, y, z) {
+        "use strict";
+        
+        var cubeGeometry = new THREE.BoxGeometry(CUBE_SIDE, CUBE_SIDE, CUBE_SIDE, 3, 3, 3);
+    
+        cubeGeometry.computeFaceNormals();
+        cubeGeometry.computeVertexNormals();
+
+        var cubeLoader = new THREE.TextureLoader();
+        var cubeTextures = [
+            cubeLoader.load('./assets/cube_1.png'),
+            cubeLoader.load('./assets/cube_2.png'),
+            cubeLoader.load('./assets/cube_3.png'),
+            cubeLoader.load('./assets/cube_4.png'),
+            cubeLoader.load('./assets/cube_5.png'),
+            cubeLoader.load('./assets/cube_6.png')];
+        
+        var cubePhongMaterials = cubeTextures.map(
+            function(texture) {
+                texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(1, 1);
+                return {
+                    wireframe: false,
+                    map: texture,
+                    shininess: 50, 
+                    specular: 0xffffff
+                }
+            }
+        )
+
+        var cubeBasicMaterials = cubeTextures.map(
+            function(texture) {
+                return {
+                    wireframe: false,
+                    map: texture
+                }
+            }
+        )
+
+        var cubeMesh = new Mesh(cubeGeometry, cubePhongMaterials, cubeBasicMaterials);
+        cubeMesh.position.set(x, y, z);
+        this.add(cubeMesh);
     }
 }
 
@@ -163,9 +221,9 @@ function createDirLight() {
    
     dir_light.shadow.camera.near = -60;
     dir_light.shadow.camera.far = 90;
-    dir_light.shadow.camera.left= -90;
+    dir_light.shadow.camera.left = -90;
     dir_light.shadow.camera.right = 90;
-    dir_light.shadow.camera.top= 90;
+    dir_light.shadow.camera.top = 90;
     dir_light.shadow.camera.bottom = -90;
 
     dir_light.shadow.mapSize.width = 4096;
@@ -257,15 +315,9 @@ function resizeCameraOrtographic(index, width, height) {
 
 function resizeCameraPerspective(index) {
     "use strict";
-    
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    
-    var sizes = calcCameraSize()
-    var width = sizes[0]
-    var height = sizes[1]
-    
+        
     if (window.innerHeight > 0 && window.innerWidth > 0) {
-        cameras[index].aspect = width / height;
+        cameras[index].aspect = window.innerWidth / window.innerHeight;
         cameras[index].updateProjectionMatrix();
     }
     
@@ -306,8 +358,16 @@ function onKeyDown(e) {
         case 87: //W
         case 119: //w
         scene.traverse(function(node) {
-            if (node instanceof THREE.Mesh) {
-                node.material.wireframe = !node.material.wireframe;
+            if (node instanceof Mesh) {
+                node.materialsArray.forEach(function(material) {
+                    if (Array.isArray(material)) {
+                        material.forEach(function(face) {
+                            face.wireframe = !face.wireframe;
+                        })
+                    } else {
+                        material.wireframe = !material.wireframe;
+                    }
+                })
             }
         });
         break;
@@ -323,13 +383,8 @@ function onKeyDown(e) {
         case 108://l 
         scene.traverse(function(node) {
             if (node instanceof Mesh) {
-                if (node.hasFlatMaterial){
-                    node.hasFlatMaterial = false;
-                    node.material = node.lightMaterial;
-                } else {
-                    node.hasFlatMaterial = true;
-                    node.material = node.flatMaterial;
-                }
+                node.materialIndex = Math.abs(node.materialIndex - 1);
+                node.material = node.materialsArray[node.materialIndex];
             }
         });          
         break;
@@ -353,6 +408,7 @@ function createScene() {
 
     scene.add(new Chess(0, 0, 0));
     scene.add(new Ball(0, 0, 0));
+    scene.add(new Cube(0, 0, 0));
 }
 
 function createLights(){
