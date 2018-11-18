@@ -56,7 +56,7 @@ class Chess extends Object3D {
         super();
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         this.addChessTable(0, 0, 0);
-        this.position.set(x, y, z);
+        this.position.set(x, y - 1, z);
     }
 
     addChessTable(x, y, z) {
@@ -84,7 +84,7 @@ class Chess extends Object3D {
                 map: tableTexture
             }
         );
-        tableMesh.position.set(x, y - 0.5, z);
+        tableMesh.position.set(x, y, z);
         this.add(tableMesh);
     }
 }
@@ -183,6 +183,7 @@ class Cube extends Object3D {
             cubeLoader.load('./assets/cube_5.png'),
             cubeLoader.load('./assets/cube_6.png')];
         
+        var cubeBumpMap = cubeLoader.load('./assets/cube_5.png');
         var cubePhongMaterials = cubeTextures.map(
             function(texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -190,6 +191,7 @@ class Cube extends Object3D {
                 return {
                     wireframe: false,
                     map: texture,
+                    bumpMap: cubeBumpMap,
                     shininess: 50, 
                     specular: 0xffffff
                 }
