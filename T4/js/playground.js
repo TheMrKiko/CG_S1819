@@ -1,10 +1,8 @@
-var scene, renderer, clock;
+var gameScene, pauseScene, renderer, clock;
 var cameras = new Array(2);
 var activeCamera = 0;
-var dir_light;
-var point_light;
-
-
+var dir_light, point_light;
+var isPaused = false;
 
 const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
@@ -48,6 +46,37 @@ class Mesh extends THREE.Mesh {
         this.materialsArray = materialsArray;
         this.materialIndex = 0;
         return this;
+    }
+}
+
+class PauseWarning extends Object3D {
+    constructor(x, y, z) {
+        super();
+        this.add(new THREE.AxesHelper(BALL_RADIUS));
+        this.addChessTable(0, 0, 0);
+        this.position.set(x, y - 1, z);
+    }
+
+    addChessTable(x, y, z) {
+        "use strict";
+
+        var tableTexture = new THREE.TextureLoader().load('./assets/pause.png');
+        tableTexture.wrapS = tableTexture.wrapT = THREE.RepeatWrapping;
+        tableTexture.repeat.set(1,1);
+
+        var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE/2, 10, 1, 10);
+
+        tableGeometry.computeFaceNormals();
+        tableGeometry.computeVertexNormals();
+
+        var tableMesh = new THREE.Mesh(tableGeometry, new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: false,
+                map: tableTexture
+            })
+        );
+        tableMesh.position.set(x, y, z);
+        this.add(tableMesh);
     }
 }
 
@@ -233,7 +262,7 @@ function createDirLight() {
     dir_light.shadow.mapSize.width = 4096;
     dir_light.shadow.mapSize.height = 4096;
  
-    scene.add(dir_light);  
+    gameScene.add(dir_light);  
 }
 
 function createPointLight() {
@@ -242,8 +271,7 @@ function createPointLight() {
 
 	point_light.position.set(0, 1, 0.5);
 	point_light.castShadow = true;
-	scene.add(point_light);
-
+    gameScene.add(point_light);
 }
 
 function createOrtographicCamera(index, x, y, z) {
@@ -359,6 +387,10 @@ function onKeyDown(e) {
         case 112://p 
         point_light_switcher();
         break;
+        case 83://S
+        case 115://S 
+        isPaused = !isPaused;
+        break;
         case 87: //W
         case 119: //w
         scene.traverse(function(node) {
@@ -377,7 +409,7 @@ function onKeyDown(e) {
         break;
         case 66: //B
         case 98: //b
-        scene.traverse(function(node) {
+        gameScene.traverse(function(node) {
             if (node instanceof Ball) {
                 node.acceleration = -node.acceleration;
             }
@@ -385,7 +417,7 @@ function onKeyDown(e) {
         break;
         case 76://L
         case 108://l 
-        scene.traverse(function(node) {
+        gameScene.traverse(function(node) {
             if (node instanceof Mesh) {
                 node.materialIndex = Math.abs(node.materialIndex - 1);
                 node.material = node.materialsArray[node.materialIndex];
@@ -394,7 +426,7 @@ function onKeyDown(e) {
         break;
         case 69: //E
         case 101: //e
-        scene.traverse(function(node) {
+        gameScene.traverse(function(node) {
             if (node instanceof THREE.AxesHelper) {
                 node.visible = !node.visible;
             }
@@ -406,13 +438,23 @@ function onKeyDown(e) {
 function createScene() {
     "use strict";
 
-    scene = new THREE.Scene();
+    gameScene = new THREE.Scene();
 
-    scene.add(new THREE.AxesHelper(5));
+    gameScene.add(new THREE.AxesHelper(5));
 
-    scene.add(new Chess(0, 0, 0));
-    scene.add(new Ball(0, 0, 0));
-    scene.add(new Cube(0, 0, 0));
+    gameScene.add(new Chess(0, 0, 0));
+    gameScene.add(new Ball(0, 0, 0));
+    gameScene.add(new Cube(0, 0, 0));
+}
+
+function createPauseScene() {
+    "use strict";
+
+    pauseScene = new THREE.Scene();
+
+    pauseScene.add(new THREE.AxesHelper(5));
+
+    pauseScene.add(new PauseWarning(0, 0, 0));
 }
 
 function createLights(){
@@ -423,7 +465,11 @@ function createLights(){
 function render() {
     "use strict";
     
-    renderer.render(scene, cameras[activeCamera]);
+    if (!isPaused) {
+        renderer.render(gameScene, cameras[activeCamera]);
+    } else {
+        renderer.render(pauseScene, cameras[1]);
+    }
 }
 
 function init() {
@@ -436,6 +482,7 @@ function init() {
     document.body.appendChild(renderer.domElement);
     
     createScene();
+    createPauseScene();
     createPerspectiveCamera(0, 0, 20, 30);
     createOrtographicCamera(1, 0, 20, 0);
     createLights();
@@ -446,7 +493,7 @@ function init() {
 
     clock = new THREE.Clock();
 
-    var controls = new THREE.OrbitControls(cameras[activeCamera], renderer.domElement);
+    var controls = new THREE.OrbitControls(cameras[0], renderer.domElement);
 }
 
 function animate() {
@@ -454,7 +501,7 @@ function animate() {
 
     var timeDiff = clock.getDelta();
 
-    scene.traverse(function(node) {
+    gameScene.traverse(function(node) {
         if (node instanceof Ball) {
             node.animate(timeDiff);
         }
