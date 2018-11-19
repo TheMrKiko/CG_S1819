@@ -9,7 +9,7 @@ const PLANE_HEIGHT = 55;
 const BALL_RADIUS = 5;
 const BALL_ROTATION_RADIUS = 20;
 const BALL_ACCELERATION = 1;
-const BALL_VELOCITY_LIMIT = Math.PI * 2;
+const BALL_VELOCITY_LIMIT = Math.PI;
 const CUBE_SIDE = 10;
 const FLOOR_SIZE = 75;
 
@@ -52,19 +52,18 @@ class Mesh extends THREE.Mesh {
 class PauseWarning extends Object3D {
     constructor(x, y, z) {
         super();
-        this.add(new THREE.AxesHelper(BALL_RADIUS));
-        this.addChessTable(0, 0, 0);
+        this.addPause(0, 0, 0);
         this.position.set(x, y - 1, z);
     }
 
-    addChessTable(x, y, z) {
+    addPause(x, y, z) {
         "use strict";
 
         var tableTexture = new THREE.TextureLoader().load('./assets/pause.png');
         tableTexture.wrapS = tableTexture.wrapT = THREE.RepeatWrapping;
         tableTexture.repeat.set(1,1);
 
-        var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE/2, 10, 1, 10);
+        var tableGeometry = new THREE.BoxGeometry(PLANE_HEIGHT * 2, 2, PLANE_HEIGHT, 10, 1, 10);
 
         tableGeometry.computeFaceNormals();
         tableGeometry.computeVertexNormals();
@@ -87,24 +86,23 @@ class Chess extends Object3D {
         this.addChessTable(0, 0, 0);
         this.position.set(x, y - 1, z);
     }
-
+    
     addChessTable(x, y, z) {
         "use strict";
-
+        
         var tableTexture = new THREE.TextureLoader().load('./assets/chess_texture.jpg');
         tableTexture.wrapS = tableTexture.wrapT = THREE.RepeatWrapping;
         tableTexture.repeat.set(2, 2);
-
+        
         var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE, 10, 1, 10);
-
+        
         tableGeometry.computeFaceNormals();
         tableGeometry.computeVertexNormals();
-
+        
         var tableMesh = new Mesh(tableGeometry,
             {
                 wireframe: false,
-                opacity: 1,
-                transparent: true,
+                shininess: 10,
                 map: tableTexture
             },
             {
@@ -112,22 +110,23 @@ class Chess extends Object3D {
                 wireframe: false,
                 map: tableTexture
             }
-        );
+            );
+        tableMesh.receiveShadow = true;
         tableMesh.position.set(x, y, z);
         this.add(tableMesh);
     }
 }
-
-class Ball extends Object3D {
-    constructor(x, y, z) {
-        super();
-
+    
+    class Ball extends Object3D {
+        constructor(x, y, z) {
+            super();
+            
         this.addBall(0, 0, 0);
         this.add(new THREE.AxesHelper(BALL_RADIUS));
         
         this.acceleration = BALL_ACCELERATION;
         this.angle = 0;
-        this.velocity = Math.random() * BALL_VELOCITY_LIMIT;
+        this.velocity = 0;
         this.position.set(x, y + BALL_RADIUS, z);
     }
 
@@ -145,16 +144,13 @@ class Ball extends Object3D {
         var ballMesh = new Mesh(ballGeometry,
             {
                 wireframe: false,
-                opacity: 1,
-                transparent: true,
                 map: ballTexture,
-                shininess: 50,
-                specular: 0xffffff
+                shininess: 80,
+                specular: 0xeaeaea,
+                color: 0xb7b7b7
             },
             {
                 wireframe: false,
-                opacity: 1,
-                transparent: true,
                 map: ballTexture
             }
         );
@@ -223,8 +219,9 @@ class Cube extends Object3D {
                     map: texture,
                     bumpMap: cubeBumpMap,
                     bumpScale: 0.5,
-                    shininess: 50, 
-                    specular: 0xffffff
+                    shininess: 10, 
+                    specular: 0xffffff,
+                    color: 0xffffff
                 }
             }
         )
@@ -244,12 +241,11 @@ class Cube extends Object3D {
     }
 }
 
-function createDirLight() {
+function createDirLight(scene) {
     "use strict";
 
-    dir_light = new THREE.DirectionalLight(0xffffff, 0.7);
-    dir_light.position.set(0, 1, 0.5);
-    dir_light.lookAt(0, 1, 0.5);
+    dir_light = new THREE.DirectionalLight(0x3f9cff, 0.9);
+    dir_light.position.set(5, 20, 10);
     dir_light.castShadow = true;
    
     dir_light.shadow.camera.near = -60;
@@ -262,16 +258,16 @@ function createDirLight() {
     dir_light.shadow.mapSize.width = 4096;
     dir_light.shadow.mapSize.height = 4096;
  
-    gameScene.add(dir_light);  
+    scene.add(dir_light);  
 }
 
-function createPointLight() {
+function createPointLight(scene) {
 
-	point_light = new THREE.PointLight(0xffffff, 30, 120, 2);
+	point_light = new THREE.PointLight(0xff653f, 2, 60, 2);
 
-	point_light.position.set(0, 1, 0.5);
+	point_light.position.set(10, 20, 0);
 	point_light.castShadow = true;
-    gameScene.add(point_light);
+    scene.add(point_light);
 }
 
 function createOrtographicCamera(index, x, y, z) {
@@ -369,7 +365,7 @@ function switchCamera(index) {
     activeCamera = index;
 }
 
-function onKeyDown(e) {
+function onKeyDownGame(e) {
     "use strict";
     
     switch (e.keyCode) {
@@ -393,7 +389,7 @@ function onKeyDown(e) {
         break;
         case 87: //W
         case 119: //w
-        scene.traverse(function(node) {
+        gameScene.traverse(function(node) {
             if (node instanceof Mesh) {
                 node.materialsArray.forEach(function(material) {
                     if (Array.isArray(material)) {
@@ -435,40 +431,66 @@ function onKeyDown(e) {
     }
 }
 
+function onKeyDownPause(e) {
+    "use strict";
+    switch (e.keyCode) {
+        case 83://S
+        case 115://S 
+        isPaused = !isPaused;
+        break;
+        case 82://R
+        case 114://R
+        gameScene = createScene();
+        isPaused = !isPaused;
+        break;
+    }
+}
+
 function createScene() {
     "use strict";
-
-    gameScene = new THREE.Scene();
-
-    gameScene.add(new THREE.AxesHelper(5));
-
-    gameScene.add(new Chess(0, 0, 0));
-    gameScene.add(new Ball(0, 0, 0));
-    gameScene.add(new Cube(0, 0, 0));
+    
+    var gameScenee = new THREE.Scene();
+    
+    gameScenee.add(new THREE.AxesHelper(5));
+    
+    gameScenee.add(new Chess(0, 0, 0));
+    gameScenee.add(new Ball(0, 0, 0));
+    gameScenee.add(new Cube(0, 0, 0));
+    
+    createLights(gameScenee);
+    return gameScenee;
 }
 
 function createPauseScene() {
     "use strict";
 
-    pauseScene = new THREE.Scene();
+    var pauseScenee = new THREE.Scene();
 
-    pauseScene.add(new THREE.AxesHelper(5));
+    pauseScenee.add(new PauseWarning(0, 0, 0));
 
-    pauseScene.add(new PauseWarning(0, 0, 0));
+    return pauseScenee;
 }
 
-function createLights(){
-    createDirLight();
-    createPointLight();
+function createLights(scene){
+    createDirLight(scene);
+    createPointLight(scene);
 }
 
 function render() {
     "use strict";
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     
     if (!isPaused) {
         renderer.render(gameScene, cameras[activeCamera]);
+        window.removeEventListener("keydown", onKeyDownPause);
+        window.addEventListener("keydown", onKeyDownGame);
+        
     } else {
         renderer.render(pauseScene, cameras[1]);
+        window.removeEventListener("keydown", onKeyDownGame);
+        window.addEventListener("keydown", onKeyDownPause);
     }
 }
 
@@ -481,14 +503,12 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     
-    createScene();
-    createPauseScene();
+    gameScene = createScene();
+    pauseScene = createPauseScene();
     createPerspectiveCamera(0, 0, 20, 30);
     createOrtographicCamera(1, 0, 20, 0);
-    createLights();
     render();
 
-    window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 
     clock = new THREE.Clock();
@@ -503,6 +523,7 @@ function animate() {
 
     gameScene.traverse(function(node) {
         if (node instanceof Ball) {
+            if (isPaused) timeDiff = 0;
             node.animate(timeDiff);
         }
     })
