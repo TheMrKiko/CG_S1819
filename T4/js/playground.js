@@ -82,7 +82,9 @@ class PauseWarning extends Object3D {
 class Chess extends Object3D {
     constructor(x, y, z) {
         super();
-        this.add(new THREE.AxesHelper(BALL_RADIUS));
+        var axes = new THREE.AxesHelper(BALL_RADIUS);
+        axes.visible = false;
+        this.add(axes);
         this.addChessTable(0, 0, 0);
         this.position.set(x, y - 1, z);
     }
@@ -122,7 +124,9 @@ class Chess extends Object3D {
             super();
             
         this.addBall(0, 0, 0);
-        this.add(new THREE.AxesHelper(BALL_RADIUS));
+        var axes = new THREE.AxesHelper(BALL_RADIUS);
+        axes.visible = false;
+        this.add(axes);
         
         this.acceleration = BALL_ACCELERATION;
         this.angle = 0;
@@ -156,6 +160,7 @@ class Chess extends Object3D {
         );
         ballMesh.name = "BallMesh";
         ballMesh.position.set(x, y, z);
+        ballMesh.castShadow = true;
         this.add(ballMesh);
     }
    
@@ -187,7 +192,9 @@ class Cube extends Object3D {
         super();
 
         this.addCube(0, 0, 0);
-        this.add(new THREE.AxesHelper(CUBE_SIDE));
+        var axes = new THREE.AxesHelper(CUBE_SIDE);
+        axes.visible = false;
+        this.add(axes);
         
         this.position.set(x, y + CUBE_SIDE / 2, z);
     }
@@ -236,6 +243,7 @@ class Cube extends Object3D {
         )
 
         var cubeMesh = new Mesh(cubeGeometry, cubePhongMaterials, cubeBasicMaterials);
+        cubeMesh.castShadow = true;
         cubeMesh.position.set(x, y, z);
         this.add(cubeMesh);
     }
