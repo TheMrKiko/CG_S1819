@@ -219,7 +219,7 @@ class Cube extends Object3D {
             cubeLoader.load('./assets/cube_6.png')];
         
         var cubeBumpMap = cubeLoader.load('./assets/cube_bump.png');
-        var cubePhongMaterials = cubeTextures.map(
+        var cubePhongMaterialsOps = cubeTextures.map(
             function(texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
                 texture.repeat.set(1, 1);
@@ -227,7 +227,7 @@ class Cube extends Object3D {
                     wireframe: false,
                     map: texture,
                     bumpMap: cubeBumpMap,
-                    bumpScale: 0.5,
+                    bumpScale: 2,
                     shininess: 10, 
                     specular: 0xffffff,
                     color: 0xffffff
@@ -235,7 +235,7 @@ class Cube extends Object3D {
             }
         )
 
-        var cubeBasicMaterials = cubeTextures.map(
+        var cubeBasicMaterialsOps = cubeTextures.map(
             function(texture) {
                 return {
                     wireframe: false,
@@ -244,7 +244,7 @@ class Cube extends Object3D {
             }
         )
 
-        var cubeMesh = new Mesh(cubeGeometry, cubePhongMaterials, cubeBasicMaterials);
+        var cubeMesh = new Mesh(cubeGeometry, cubePhongMaterialsOps, cubeBasicMaterialsOps);
         cubeMesh.castShadow = true;
         cubeMesh.position.set(x, y, z);
         this.add(cubeMesh);
