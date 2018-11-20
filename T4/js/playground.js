@@ -16,6 +16,8 @@ const FLOOR_SIZE = 75;
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
+const PERSP_CAM_POS = new THREE.Vector3(0, 20, 30);
+const ORTH_CAM_POS = new THREE.Vector3(0, 20, 0);
 
 class Object3D extends THREE.Object3D {
 
@@ -499,6 +501,8 @@ function render() {
         renderer.render(pauseScene, cameras[1]);
         window.removeEventListener("keydown", onKeyDownGame);
         window.addEventListener("keydown", onKeyDownPause);
+        cameras[0].position.set(PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
+        cameras[0].lookAt(new THREE.Vector3());
     }
 }
 
@@ -513,8 +517,8 @@ function init() {
     
     gameScene = createScene();
     pauseScene = createPauseScene();
-    createPerspectiveCamera(0, 0, 20, 30);
-    createOrtographicCamera(1, 0, 20, 0);
+    createPerspectiveCamera(0, PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
+    createOrtographicCamera(1, ORTH_CAM_POS.x, ORTH_CAM_POS.y, ORTH_CAM_POS.z);
     render();
 
     window.addEventListener("resize", onResize);
