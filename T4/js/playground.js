@@ -2,8 +2,7 @@ var gameScene, pauseScene, renderer, clock, controls;
 var cameras = new Array(2);
 var activeCamera = 0;
 var dir_light, point_light;
-var isPaused = false;
-var statusChanged = true;
+var isPaused = false, statusChanged = true;
 
 const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
@@ -89,7 +88,7 @@ class Chess extends Object3D {
         axes.visible = false;
         this.add(axes);
         this.addChessTable(0, 0, 0);
-        this.position.set(x, y - 1, z);
+        this.position.set(x, y - 0.005, z);
     }
     
     addChessTable(x, y, z) {
@@ -99,7 +98,7 @@ class Chess extends Object3D {
         tableTexture.wrapS = tableTexture.wrapT = THREE.RepeatWrapping;
         tableTexture.repeat.set(2, 2);
         
-        var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 2, FLOOR_SIZE, 10, 1, 10);
+        var tableGeometry = new THREE.BoxGeometry(FLOOR_SIZE, 0.01, FLOOR_SIZE, 10, 1, 10);
         
         tableGeometry.computeFaceNormals();
         tableGeometry.computeVertexNormals();
