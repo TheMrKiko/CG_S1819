@@ -1,4 +1,4 @@
-var gameScene, pauseScene, renderer, clock;
+var gameScene, pauseScene, renderer, clock, controls;
 var cameras = new Array(2);
 var activeCamera = 0;
 var dir_light, point_light;
@@ -473,7 +473,7 @@ function createScene() {
     
     createLights(gameScenee);
     createPerspectiveCamera(0, PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
-    var controls = new THREE.OrbitControls(cameras[0], renderer.domElement);
+    controls = new THREE.OrbitControls(cameras[0], renderer.domElement);
     return gameScenee;
 }
 
@@ -502,22 +502,20 @@ function render() {
     
     if (!isPaused) {
         renderer.render(gameScene, cameras[activeCamera]);
-        //controls.enabled = true;
         if (statusChanged) {
             statusChanged = false;
+            controls.enabled = true;
             window.removeEventListener("keydown", onKeyDownPause);
             window.addEventListener("keydown", onKeyDownGame);
         }
         
     } else {
         renderer.render(pauseScene, cameras[1]);
-        //controls.enabled = false;
         if (statusChanged) {
             statusChanged = false;
+            controls.enabled = false;
             window.removeEventListener("keydown", onKeyDownGame);
             window.addEventListener("keydown", onKeyDownPause);
-            //cameras[0].position.set(PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
-            //cameras[0].lookAt(new THREE.Vector3());
         }
     }
 }
