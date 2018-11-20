@@ -3,6 +3,7 @@ var cameras = new Array(2);
 var activeCamera = 0;
 var dir_light, point_light;
 var isPaused = false;
+var statusChanged = true;
 
 const ASPECT_RATIO = 2 / 1;
 const PLANE_HEIGHT = 55;
@@ -142,7 +143,7 @@ class Chess extends Object3D {
         var ballTexture = new THREE.TextureLoader().load('./assets/ball_13_texture.jpg');
         ballTexture.wrapS = ballTexture.wrapT = THREE.ClampToEdgeWrapping;
         
-        var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 10, 10);
+        var ballGeometry = new THREE.SphereGeometry(BALL_RADIUS, 20, 20);
 
         ballGeometry.computeFaceNormals();
         ballGeometry.computeVertexNormals();
@@ -396,6 +397,7 @@ function onKeyDownGame(e) {
         case 83://S
         case 115://S 
         isPaused = !isPaused;
+        statusChanged = true;
         break;
         case 87: //W
         case 119: //w
@@ -447,11 +449,13 @@ function onKeyDownPause(e) {
         case 83://S
         case 115://S 
         isPaused = !isPaused;
+        statusChanged = true;
         break;
         case 82://R
         case 114://R
         gameScene = createScene();
         isPaused = !isPaused;
+        statusChanged = true;
         break;
     }
 }
@@ -468,6 +472,8 @@ function createScene() {
     gameScenee.add(new Cube(0, 0, 0));
     
     createLights(gameScenee);
+    createPerspectiveCamera(0, PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
+    var controls = new THREE.OrbitControls(cameras[0], renderer.domElement);
     return gameScenee;
 }
 
@@ -477,6 +483,8 @@ function createPauseScene() {
     var pauseScenee = new THREE.Scene();
 
     pauseScenee.add(new PauseWarning(0, 0, 0));
+
+    createOrtographicCamera(1, ORTH_CAM_POS.x, ORTH_CAM_POS.y, ORTH_CAM_POS.z);
 
     return pauseScenee;
 }
@@ -494,15 +502,23 @@ function render() {
     
     if (!isPaused) {
         renderer.render(gameScene, cameras[activeCamera]);
-        window.removeEventListener("keydown", onKeyDownPause);
-        window.addEventListener("keydown", onKeyDownGame);
+        //controls.enabled = true;
+        if (statusChanged) {
+            statusChanged = false;
+            window.removeEventListener("keydown", onKeyDownPause);
+            window.addEventListener("keydown", onKeyDownGame);
+        }
         
     } else {
         renderer.render(pauseScene, cameras[1]);
-        window.removeEventListener("keydown", onKeyDownGame);
-        window.addEventListener("keydown", onKeyDownPause);
-        cameras[0].position.set(PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
-        cameras[0].lookAt(new THREE.Vector3());
+        //controls.enabled = false;
+        if (statusChanged) {
+            statusChanged = false;
+            window.removeEventListener("keydown", onKeyDownGame);
+            window.addEventListener("keydown", onKeyDownPause);
+            //cameras[0].position.set(PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
+            //cameras[0].lookAt(new THREE.Vector3());
+        }
     }
 }
 
@@ -517,15 +533,11 @@ function init() {
     
     gameScene = createScene();
     pauseScene = createPauseScene();
-    createPerspectiveCamera(0, PERSP_CAM_POS.x, PERSP_CAM_POS.y, PERSP_CAM_POS.z);
-    createOrtographicCamera(1, ORTH_CAM_POS.x, ORTH_CAM_POS.y, ORTH_CAM_POS.z);
     render();
 
     window.addEventListener("resize", onResize);
 
     clock = new THREE.Clock();
-
-    var controls = new THREE.OrbitControls(cameras[0], renderer.domElement);
 }
 
 function animate() {
